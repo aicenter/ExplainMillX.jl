@@ -1,0 +1,214 @@
+# Design Document: Structural Explanation System for Mill.jl Models
+
+**Status:** Draft for review — v1 scope and key mechanisms resolved (see §9)
+**Audience:** Engineers implementing the system
+**Scope:** High-level architecture; implementation details deferred to per-component design docs
+
+---
+
+## 1. Purpose
+
+Build a system that explains predictions of models trained on hierarchically-structured data (Mill.jl `AbstractMillNode` samples, `AbstractMillModel` models, optionally extracted from JSON via JsonGrinder.jl `AbstractExtractor`s), by finding a minimal sub-sample that preserves the model's decision.
+
+This is a **clean-room rewrite**: `ExplainMillX.jl` does not depend on `ExplainMill.jl`. Prior art (including `ExplainMill.jl`'s use of `Duff.jl` for Shapley-style scoring) may be referenced for algorithmic ideas, but no code or API is inherited — this frees the design to fix known issues (symbol-keyed dispatch, implicit RNG state, missing objective-injection generality) without legacy constraints.
+
+### 1.1 Goals
+
+- Explain any Mill.jl model without requiring changes to the model or a bespoke integration per model architecture.
+- Support multiple importance-scoring strategies (Monte Carlo, gradient-based, greedy) behind one interface, and multiple search/pruning strategies behind another, so either can evolve independently.
+- Produce explanations in two forms: a pruned Mill sample (for programmatic reuse — re-scoring, visualization) and a JSON-shaped explanation (for human consumption), when a JsonGrinder extractor is available.
+- Be extensible to new Mill node types without touching existing algorithm code, and extensible to new scoring/search strategies without touching existing node-type code. (N node types × M algorithms must not become N×M bespoke implementations.)
+
+### 1.2 Non-goals (v1)
+
+- Explaining non-Mill models (tabular/image/etc.) — out of scope; the mask abstraction is tied to Mill's node hierarchy.
+- Global/dataset-level explanations — v1 is per-sample only.
+- Guaranteed-minimal (exact) subset search — this is combinatorially hard in general; v1 targets good heuristic approximations, not optimality proofs.
+- Regression/multi-label *feature support* — v1 targets classification with a confidence-gap notion. However, the objective-injection mechanism itself must be validated against a non-classification objective in tests (see §6.1) to prove the design generalizes, even though no regression-facing API ships in v1.
+- Batched/simultaneous explanation of multiple samples in one Monte Carlo scoring run — deferred to v2 (see §9).
+
+---
+
+## 2. Background: what Mill.jl and JsonGrinder.jl give us
+
+Understanding the integration surface is the prerequisite for the whole design.
+
+**Mill.jl** represents a hierarchical multi-instance sample as a tree of node types:
+- `ArrayNode{data}` — leaf, wraps a dense/sparse matrix, one-hot/categorical matrix, or `NGramMatrix` (string features), with optional `metadata` carrying the original (pre-numeric) value per column.
+- `BagNode(data, bags::AlignedBags)` — a set/array of instances (each instance is itself a sub-sample), used for arrays in the source data.
+- `ProductNode(children::NamedTuple)` — a struct/dict-like grouping of named children, used for objects in the source data.
+- `AbstractMillModel` — a model tree that mirrors the sample tree's shape 1:1 and is callable: `model(ds) -> output`.
+
+**JsonGrinder.jl** provides `AbstractExtractor`s that convert raw JSON into Mill samples, and know how to map a numeric/matrix representation back to the original JSON-shaped value (this reverse mapping is what lets an explanation be shown in JSON form instead of matrix form).
+
+The integration strategy is: **build a second tree, isomorphic to the Mill sample tree, whose leaves accumulate importance information** — not to touch Mill/JsonGrinder internals at all, only to consume their public node/extractor type hierarchy via multiple dispatch. This keeps the explanation system decoupled from Mill/JsonGrinder internals and resilient to their evolution, as long as their node type taxonomy stays stable.
+
+---
+
+## 3. Core abstraction: the shadow mask tree
+
+Define `AbstractStructureMask`, with one concrete subtype per Mill node type:
+
+| Mill node type | Mask type |
+|---|---|
+| `ArrayNode{Matrix}` | `FeatureMask` |
+| `ArrayNode{SparseMatrix}` | `SparseArrayMask` |
+| `ArrayNode{MaybeHotMatrix/OneHotMatrix}` | `CategoricalMask` |
+| `ArrayNode{NGramMatrix}` | `NGramMatrixMask` |
+| `BagNode` | `BagMask` |
+| `ProductNode` | `ProductMask` |
+
+All six of these ship in v1 (see §9 — v1 scope includes full leaf-type coverage, not just the structural node types, since real JSON-extracted samples need categorical/sparse/n-gram leaves immediately).
+
+Each mask node holds a boolean vector (or nested mask, for `BagMask`/`ProductMask`) marking which items (features / instances / categorical values / n-grams) are currently "kept."
+
+Construction is generic and recursive:
+
+```julia
+create_mask_structure(ds::AbstractMillNode, leaf_factory) -> AbstractStructureMask
+```
+
+`leaf_factory` is invoked at every leaf node and decides what payload the leaf mask carries — this is what decouples "shape" from "what an algorithm accumulates at a leaf" (see §5).
+
+Applying a mask filters/zeroes the underlying sample without mutating it: `ds[mask] -> AbstractMillNode` (a new, smaller/masked sample, same shape contract the model expects).
+
+### 3.1 Generic traversal — the only sanctioned way to walk the tree
+
+Define exactly two primitives, both memoized (an `IdDict` keyed by node identity) to correctly handle shared sub-structure:
+
+```julia
+foreach_mask(f, m::AbstractStructureMask)   # side-effecting visit, (leaf_mask, level) -> ()
+mapmask(f, m::AbstractStructureMask)        # structure-preserving transform
+```
+
+**Design rule:** algorithm code (heuristics, pruning, output conversion) must be written only against these two primitives, never against explicit per-node-type recursion. New node types plug in by extending `create_mask_structure`, `foreach_mask`, `mapmask`, and `Base.getindex(ds, mask)` for that one type — existing algorithms need zero changes. This is the single most important extensibility guarantee in the system; treat any PR that recurses over `ProductMask`/`BagMask` fields directly (instead of through these primitives) as a design violation.
+
+---
+
+## 4. Pipeline architecture
+
+Three independently swappable stages, connected by two narrow interfaces (a mask, and an injected objective function):
+
+```
+scoring stage                 pruning stage                    output stage
+─────────────                 ─────────────                    ────────────
+stats(strategy, ds, model,    prune!(mask, model, ds,           e2boolean(ds, mask, extractor)
+      class, cluster)              objective_fn, strategy)          -> JSON-shaped value
+  -> mask (scored)              -> mask (finalized, boolean)    ds[mask] -> pruned Mill sample
+```
+
+- **Scoring stage**: a strategy object (e.g. a Monte Carlo scorer) implements `stats`/`statsf`, builds a mask via `create_mask_structure` with its own leaf payload type, perturbs it repeatedly, evaluates `model`, and accumulates per-item importance.
+- **Pruning stage**: given per-item importance and an **injected objective function** `f(model_output) -> Real` (positive = decision preserved), searches for a small subset that keeps `f ≥ 0`. Selected by a typed strategy object (see §5.2), not a symbol.
+- **Output stage**: converts the final boolean mask back into a pruned Mill sample, or — if an extractor is supplied — into a JSON-shaped value with dropped parts marked absent, using the extractor's reverse-mapping capability, falling back gracefully where reverse-mapping isn't available (see §5.4).
+
+### 4.1 Objective-function injection (critical decoupling)
+
+The scoring/pruning core must never know what "confidence," "class," or "threshold" mean. The top-level `explain(...)` entry point is responsible for building the objective function from the task (e.g. a classification confidence-gap) and passing it down as a plain closure:
+
+```julia
+f(o) = sum(min.(confidence_gap(o, class) .- thresholds, 0))
+prune!(mask, model, ds, f, strategy)
+```
+
+A lower-level `explainf(strategy, ds, model, fₛ, fₚ; ...)` entry point exists that takes both the scoring objective `fₛ` and pruning objective `fₚ` directly, bypassing the classification-specific wrapper entirely. This is what keeps the door open for regression, ranking, or anomaly-score targets later without touching the search machinery. **v1 ships only the classification wrapper as a public feature**, but the test suite exercises `explainf` directly with a synthetic non-classification scalar objective (see §6.1) specifically to prove `fₛ`/`fₚ` injection carries no hidden classification assumptions.
+
+---
+
+## 5. Strategy interfaces
+
+All strategy selection — scoring and pruning — uses **typed strategy objects dispatched via Julia's multiple dispatch**, not symbols. Rationale: the strategy space is a composition of orthogonal axes (see §5.2); typed objects let the compiler catch missing combinations and let axes be composed/validated at the type level (e.g. via traits), where a symbol-keyed `if/elseif` chain (the approach used by prior art) silently risks incomplete branches when new combinations are added.
+
+### 5.1 Scoring strategies
+
+```julia
+stats(strategy, ds::AbstractMillNode, model::AbstractMillModel, class, cluster; rng::AbstractRNG=Random.default_rng()) -> mask
+statsf(strategy, ds::AbstractMillNode, model::AbstractMillModel, fₛ, cluster; rng::AbstractRNG=Random.default_rng()) -> mask
+```
+
+Every stochastic strategy takes `rng` as an explicit keyword argument (following the `Random.jl` convention), defaulting to the global RNG but overridable by the caller for reproducibility. No strategy may consult global RNG state implicitly — this is the mechanism that fixes the non-determinism gap seen in prior art.
+
+Each strategy defines its own leaf mask payload type (passed as `leaf_factory` to `create_mask_structure`) carrying whatever accumulator it needs (e.g., a running mean/variance struct for a Monte Carlo estimator, nothing extra for a gradient-based one).
+
+**v1 scope:** one Monte Carlo strategy (a Shapley/Banzhaf-style value estimator, single-sample only — no per-output-item tracking, see §9) is the only scoring strategy implemented end-to-end in v1. Gradient-based and pure-random strategies are deferred until the pipeline and extension contract are validated.
+
+### 5.2 Pruning strategies
+
+```julia
+prune!(mask::AbstractStructureMask, model, ds, fₚ, strategy) -> mask
+```
+
+`strategy` is a typed object composed along **orthogonal axes** rather than one bespoke type per need:
+
+- **Granularity**: flat (whole sample as one vector) vs. level-by-level (respecting tree depth) vs. level-by-level with live model/data access at each step.
+- **Search order**: heuristic-importance-ordered vs. greedy stepwise (forward-selection-style).
+- **Post-pass**: optional local-search fine-tuning after the main search (a boolean/trait on the strategy object, not a separate type per combination).
+
+Expose the method space through an explicit enumeration function (`pruning_strategies()`, returning example instances or the constructor list) so callers and tests can discover what's available without reading source.
+
+**v1 scope:** 2–3 pruning strategies spanning the axes (e.g. flat+heuristic-order, level-by-level+heuristic-order, and one greedy variant) — enough to prove the axis-composition design without building out the full combinatorial matrix immediately.
+
+### 5.3 Node-type extension contract
+
+For each new Mill node type, an implementer must provide, and only provide:
+
+1. A mask type (`AbstractStructureMask` subtype).
+2. `create_mask_structure(ds::NodeType, leaf_factory)`.
+3. `foreach_mask`/`mapmask` dispatch for the new mask type (usually a one-line recursive call into children).
+4. `Base.getindex(ds::NodeType, mask::MaskType)` — apply the mask to produce a smaller/zeroed sample.
+
+No other file in the system should require changes. Write this as an explicit checklist in the contributor docs; it's the test of whether the abstraction is holding.
+
+### 5.4 Output-stage extractor contract
+
+When converting a mask back to a JSON-shaped explanation via an extractor, the contract is a **documented fallback, not a strict requirement**: if a given `AbstractExtractor` subtype does not implement reverse-mapping for a subtree, that subtree is emitted in its matrix/mask-level representation instead, with an explicit marker in the output noting the fallback occurred. `explain(...)` must never error solely because one extractor type lacks reverse-mapping support — partial JSON-shaped output with a clearly marked fallback region is preferred over failing the whole explanation.
+
+---
+
+## 6. Cross-cutting concerns — solve once, centrally
+
+Identify concerns that would otherwise leak into every strategy implementation, and give each exactly one owner:
+
+- **Reachability/invalidation.** Masking out a `BagMask` instance also masks everything nested inside it, but the nested mask still holds stale boolean values. Provide one mechanism — a `participate` flag per leaf item, updated by a single tree-wide pass (`updateparticipation!`) — that all scoring strategies consult before counting an item's contribution. Do not let individual strategies re-derive reachability.
+- **Flat vs. hierarchical addressing.** Some pruning strategies want to treat the sample as one flat vector; others need tree structure. Provide one bidirectional flat↔tree view (`FlatView` + column-identification helpers) so flat-oriented algorithms don't need to be tree-aware and vice versa.
+- **Correlated/grouped items.** Independent per-item perturbation misattributes importance among correlated fields. Support an optional `cluster_membership` on the mask so multiple raw items can be forced to move together as one unit during scoring — an explicit, opt-in mechanism rather than something each strategy handles ad hoc.
+
+### 6.1 Objective-injection validation
+
+Because `explainf`'s `fₛ`/`fₚ` are meant to be task-agnostic (§4.1), the test suite must include at least one exercise of `explainf` with a synthetic, non-classification scalar objective (e.g. "minimize sub-sample size subject to a fixed synthetic scalar function of the model output staying above a threshold, unrelated to any class/softmax notion"). This is a design-verification test, not a shipped feature: it exists to catch accidental classification-specific assumptions leaking into the scoring/pruning core.
+
+---
+
+## 7. Non-functional requirements
+
+- **Determinism**: every stochastic strategy accepts an explicit `rng` keyword argument (§5.1); no reliance on global RNG state. Explanations are reproducible whenever the caller fixes a seed and passes it through.
+- **Query budget awareness**: scoring strategies make repeated model calls (Monte Carlo) or gradient calls; expose the query count as a tunable parameter, not a magic constant, so cost/quality can be traded off per use case.
+- **Extensibility over completeness in v1**: ship the v1 scope defined in §5.1/§5.2/§3 (all six node types, one scoring strategy, 2–3 pruning strategies) end-to-end first, validate the extension contract (§5.3) by adding a second node type variant and a second strategy of each kind, *then* fill out the remaining strategy matrix.
+- **Testability per stage**: because stages communicate only via a mask and an injected function, each stage should be unit-testable independently of the others (e.g., test pruning against a synthetic mask + a hand-written objective, without needing a real model).
+
+---
+
+## 8. Known risks to design around (carried over from evaluating prior art)
+
+These are methodological, not implementation, risks — the architecture should make them *visible/tunable*, even where it can't eliminate them:
+
+- Perturbation-based scoring evaluates the model on masked/partial samples that may be out-of-distribution relative to training data; document this limitation rather than presenting scores as ground truth.
+- Minimal sufficient subsets are non-unique; consider surfacing multiple candidate explanations or a stability/confidence indicator rather than a single "the" explanation.
+- Search is heuristic, not exact; make the chosen tolerance (`abs_tol`/`rel_tol` or equivalent) an explicit, visible parameter in the output, not a buried default.
+- The clustering hook (§6) is a first-class feature specifically because independent-perturbation scoring is known to misattribute importance among correlated fields.
+
+---
+
+## 9. Resolved decisions
+
+Previously open questions, resolved during design review:
+
+1. **Batched/per-output-item tracking in scoring.** Deferred to v2. v1 Monte Carlo scoring is single-sample only; this was an accepted, known gap in prior art and is not a v1 blocker.
+2. **Extractor reverse-mapping contract.** Documented fallback (§5.4): missing reverse-mapping for a subtree degrades that subtree's output to matrix/mask-level representation with an explicit marker, rather than erroring the whole explanation.
+3. **Strategy dispatch mechanism.** Typed strategy objects with multiple dispatch, for both scoring (§5.1) and pruning (§5.2) — not symbols. Chosen specifically to avoid the extension-safety issues symbol-keyed dispatch caused in prior art.
+4. **Relationship to ExplainMill.jl.** Clean-room rewrite; no dependency. Ideas may be reused, code is not.
+5. **RNG threading.** Explicit `rng::AbstractRNG` keyword argument on every stochastic strategy function, default `Random.default_rng()`. No implicit global RNG reliance.
+6. **v1 scope.**
+   - Node types: all six from §3 (`ArrayNode` dense/sparse/categorical/n-gram, `BagNode`, `ProductNode`) — full leaf coverage from v1, not just the structural (Bag/Product) cases, since real JSON-extracted samples need it immediately.
+   - Scoring: one Monte Carlo (Shapley/Banzhaf-style) strategy only.
+   - Pruning: 2–3 strategies spanning the granularity/search-order axes.
+7. **Objective-injection generality.** Validated in v1 via a design-verification test (§6.1) using `explainf` with a synthetic non-classification objective, even though regression/ranking is not a shipped v1 feature.

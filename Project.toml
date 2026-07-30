@@ -1,0 +1,13 @@
+name = "ExplainMillX"
+uuid = "bd2d4837-5308-4055-89dd-edd0c6f94081"
+authors = ["Pevnak <pevnak@gmail.com>"]
+version = "0.0.1"
+
+[deps]
+Mill = "1d0525e4-8992-11e8-313c-e310e1f6ddea"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+
+[compat]
+Mill = "2.12"
+julia = "1.10"
