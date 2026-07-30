@@ -8,17 +8,15 @@ A complete, runnable example in three parts:
   2. Train a Mill.jl model on it -- a condensed version of the official
      JsonGrinder.jl tutorial:
      https://ctuavastlab.github.io/JsonGrinder.jl/stable/examples/mutagenesis/mutagenesis/
-  3. Explain one of the model's predictions using ExplainMillX: score
-     importance with `ShapleyExplainer`, then prune with `PruningStrategy`/
-     `prune!`, and print which atoms/bonds/descriptors the model actually
-     needed to keep its prediction.
+  3. Explain one of the model's predictions using ExplainMillX's top-level
+     `explain(...)` convenience function.
+  4. Walk through what `explain(...)` actually does internally, step by
+     step: score importance with `ShapleyExplainer`, prune with
+     `PruningStrategy`/`prune!`, and print which atoms/bonds/descriptors
+     the model actually needed to keep its prediction.
 
 Run with:
     julia --project=examples examples/mutagenesis.jl
-
-ExplainMillX has no top-level `explain(...)` convenience function yet (see
-doc/design/pruning.md) -- part 3 below wires scoring and pruning together
-by hand, which also serves as a worked example of how the pieces fit.
 =#
 
 using HTTP
@@ -28,6 +26,7 @@ using Mill
 using Flux
 using MLUtils
 using Statistics
+using Printf
 using Random
 using ExplainMillX
 
@@ -109,6 +108,23 @@ end
 sample_idx = 14
 sample_json = jss_test[sample_idx]
 ds = e(sample_json; store_input=Val(true))
+
+# The easiest way to explain the sample is to just call `explain`, which
+# does everything below in one call: predicts the class, scores item
+# importance, prunes, and reports how much of the sample was needed.
+result = explain(ShapleyExplainer(150), ds, model)
+display(result)
+println()
+
+## ---------------------------------------------------------------------
+## 4. Explaining one prediction -- step by step
+## ---------------------------------------------------------------------
+
+# Below, we show the explanation step by step, explaining the concrete
+# machinery `explain(...)` above just did on our behalf. The part below is
+# intended for users who want to understand how the method actually works
+# (or who need `explainf`'s lower-level flexibility for something
+# `explain` doesn't cover -- see src/explain.jl's docstrings).
 
 ŷ = argmax(vec(model(ds)))
 z0 = softmax(model(ds))[ŷ]                 # the model's raw logit on the full molecule

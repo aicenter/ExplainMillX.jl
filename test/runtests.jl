@@ -5,6 +5,7 @@ using SparseArrays
 using ExplainMillX
 using Mill
 using Flux
+using JsonGrinder
 
 using ExplainMillX: leafmask, hybridmask, routermask, isleaf, isrouter, sparsecolumns
 
@@ -24,4 +25,5 @@ include("flatview.jl")
 include("localsearch.jl")
 include("prunestrategy.jl")
 include("explain.jl")
+include("jsonoutput.jl")
 

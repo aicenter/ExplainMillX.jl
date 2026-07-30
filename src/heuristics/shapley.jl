@@ -38,7 +38,7 @@ end to end (random sampling, participation, hard pruning, paired
 bookkeeping traversal) -- see `doc/design/pruning.md` for where this fits
 relative to a production scoring strategy.
 """
-struct ShapleyExplainer
+struct ShapleyExplainer <: AbstractHeuristic
     n::Int
 end
 ShapleyExplainer() = ShapleyExplainer(1000)

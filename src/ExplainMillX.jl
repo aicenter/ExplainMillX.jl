@@ -4,6 +4,7 @@ using Mill
 using Mill: ArrayNode, BagNode, ProductNode, AbstractMillNode, numobs
 using SparseArrays
 using Random
+using JsonGrinder
 
 include("masks/structmask.jl")
 include("masks/traversal.jl")
@@ -20,6 +21,7 @@ include("pruning/localsearch.jl")
 include("pruning/prunestrategy.jl")
 
 include("explain.jl")
+include("output/jsonoutput.jl")
 
 export StructMask, leafmask, hybridmask, routermask, isleaf, isrouter
 export prunemask, softvalue, randomize!, participate
@@ -33,5 +35,6 @@ export addminimumbi!, addone!, removeone!, sfs!
 export randomremoval!, greedyremoval!, finetune!, settobest!
 export GreedyForward, HeuristicOrder, PruningStrategy, search!, prune!
 export explain, explainf, ExplanationResult, n_pruned, fraction_kept, fraction_pruned
+export explain_json
 
 end # module
