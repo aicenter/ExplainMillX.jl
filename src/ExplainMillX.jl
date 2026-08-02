@@ -13,7 +13,7 @@ include("masks/apply.jl")
 include("masks/participation.jl")
 include("masks/acctree.jl")
 
-include("heuristics/shapley.jl")
+include("heuristics/heuristics.jl")
 
 include("pruning/flatview.jl")
 include("pruning/heuristicscores.jl")
@@ -29,7 +29,7 @@ export create_structmask, applymask
 export foreach_mask, mapmask, collectmasks
 export updateparticipation!
 export AccTree, create_acctree, foreach_paired
-export ShapleyExplainer, MeanDiff, stats, score, leafscores
+export AbstractHeuristic, ShapleyExplainer, MeanDiff, stats, score, leafscores
 export FlatView, useditems, nodescores, heuristicscores
 export addminimumbi!, addone!, removeone!, sfs!
 export randomremoval!, greedyremoval!, finetune!, settobest!

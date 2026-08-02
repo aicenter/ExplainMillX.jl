@@ -112,9 +112,14 @@ ds = e(sample_json; store_input=Val(true))
 # The easiest way to explain the sample is to just call `explain`, which
 # does everything below in one call: predicts the class, scores item
 # importance, prunes, and reports how much of the sample was needed.
-result = explain(ShapleyExplainer(150), ds, model)
+result = explain(ds, model)
 display(result)
 println()
+
+# The library allows to export the pruned sample to JSON, but to do that the 
+# sample needs to be extracted with argument `store_input=Val(true)` as 
+# used above. This is indeed pretty convenient.
+JSON.print(explain_json(ds, result.mask, e), 4)
 
 ## ---------------------------------------------------------------------
 ## 4. Explaining one prediction -- step by step

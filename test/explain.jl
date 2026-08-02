@@ -49,7 +49,7 @@
         predicted = argmax(vec(model(ds)))
 
         Random.seed!(1)
-        result = explain(ShapleyExplainer(80), ds, model)
+        result = explain(ds, model; scorer=ShapleyExplainer(80))
 
         @test result isa ExplanationResult
         @test result.class == predicted
@@ -63,14 +63,25 @@
         @test pruned isa Mill.AbstractMillNode
     end
 
+    @testset "explain: default scorer (no scorer keyword given)" begin
+        ds = specimen_sample()
+        model = reflectinmodel(ds, d -> Dense(d, 4), all_imputing=true)
+
+        Random.seed!(9)
+        result = explain(ds, model)   # relies on scorer=ShapleyExplainer(300) default
+
+        @test result isa ExplanationResult
+        @test result.remaining_confidence_gap >= result.threshold - 1e-6
+    end
+
     @testset "explain: explicit class, rel_tol, and GreedyForward order" begin
         ds = specimen_sample()
         model = reflectinmodel(ds, d -> Dense(d, 4), all_imputing=true)
         predicted = argmax(vec(model(ds)))
 
         Random.seed!(2)
-        result = explain(ShapleyExplainer(80), ds, model, predicted;
-            rel_tol=0.7, order=GreedyForward(), levelbylevel=false)
+        result = explain(ds, model, predicted;
+            scorer=ShapleyExplainer(80), rel_tol=0.7, order=GreedyForward(), levelbylevel=false)
 
         @test result.class == predicted
         @test result.remaining_confidence_gap >= result.threshold - 1e-6
@@ -83,7 +94,7 @@
         predicted = argmax(vec(model(ds)))
 
         Random.seed!(3)
-        result = explain(ShapleyExplainer(80), ds, model, predicted; abs_tol=0.01)
+        result = explain(ds, model, predicted; scorer=ShapleyExplainer(80), abs_tol=0.01)
         @test isapprox(result.threshold, result.confidence_gap - 0.01; atol=1e-6)
     end
 
@@ -93,7 +104,7 @@
         predicted = argmax(vec(model(ds)))
 
         Random.seed!(4)
-        result = @test_logs (:warn,) explain(ShapleyExplainer(50), ds, model, predicted)
+        result = @test_logs (:warn,) explain(ds, model, predicted; scorer=ShapleyExplainer(50))
         @test isapprox(result.threshold, 0.9 * result.confidence_gap; atol=1e-6)
     end
 
@@ -104,7 +115,7 @@
         predicted = argmax(o)
         not_predicted = predicted == 1 ? 2 : 1
 
-        @test_throws ErrorException explain(ShapleyExplainer(50), ds, model, not_predicted; rel_tol=0.5)
+        @test_throws ErrorException explain(ds, model, not_predicted; scorer=ShapleyExplainer(50), rel_tol=0.5)
     end
 
     @testset "explain: rejects single-output (non-softmax) models" begin
@@ -112,7 +123,7 @@
         ds = an[1:1]
         model = vec ∘ Dense(4, 1) ∘ reflectinmodel(an, d -> Dense(d, 4), all_imputing=true)
 
-        @test_throws ErrorException explain(ShapleyExplainer(10), ds, model)
+        @test_throws ErrorException explain(ds, model; scorer=ShapleyExplainer(10))
     end
 
     @testset "explainf: low-level path with a hand-written binary objective" begin

@@ -141,7 +141,7 @@ Returns a `NamedTuple` `(mask, n_total, n_kept)` -- see
 them in that struct itself since it has no class/confidence-gap notion to
 report.
 """
-function explainf(scorer, ds::AbstractMillNode, model, fₛ, fₚ;
+function explainf(scorer::AbstractHeuristic, ds::AbstractMillNode, model, fₛ, fₚ;
     order::Union{HeuristicOrder,GreedyForward,Nothing}=nothing,
     levelbylevel::Bool=true,
     random_removal::Bool=true,
@@ -167,8 +167,8 @@ function explainf(scorer, ds::AbstractMillNode, model, fₛ, fₚ;
 end
 
 """
-    explain(scorer, ds, model, class; kwargs...) -> ExplanationResult
-    explain(scorer, ds, model; kwargs...) -> ExplanationResult
+    explain(ds, model, class; kwargs...) -> ExplanationResult
+    explain(ds, model; kwargs...) -> ExplanationResult
 
 Explain why `model` classifies sample `ds` as `class`, by finding a small
 subset of `ds`'s items that keeps the model's confidence in `class`
@@ -194,8 +194,15 @@ scalar/sigmoid output, use [`explainf`](@ref) directly with a
 hand-written objective (`examples/mutagenesis.jl` shows exactly this for
 a binary classifier).
 
+Only `ds` and `model` (the data being explained) are positional -- every
+choice of *how* to explain is a keyword, including `scorer`, consistent
+with `explainf`'s `order`/`levelbylevel`/`random_removal`/`finetune`
+already being keywords. The actual work happens in `_explain`, kept as a
+separate internal function specifically so a future scoring strategy that
+needs `explain`'s own orchestration (not just its own `stats` method) to
+diverge can add an `_explain` method without touching this signature.
+
 # Arguments
-- `scorer`: the scoring strategy, e.g. `ShapleyExplainer(200)`.
 - `ds::AbstractMillNode`: the sample to explain.
 - `model`: the Mill model. `model(ds)` must return (something `vec`-able
   to) one softmax logit/probability per class.
@@ -206,6 +213,9 @@ a binary classifier).
   predict this class to begin with.
 
 # Keyword arguments
+- `scorer = ShapleyExplainer(300)`: the scoring strategy. `300` Monte
+  Carlo samples is a reasonable default in practice; pass e.g.
+  `scorer=ShapleyExplainer(1000)` for a more precise (slower) estimate.
 - `abs_tol`, `rel_tol`: exactly one may be given (or neither, which warns
   once and defaults to `rel_tol=0.9`). `rel_tol` (in `[0, 1]`) keeps the
   confidence gap at that *fraction* of its original value; `abs_tol`
@@ -217,19 +227,39 @@ a binary classifier).
 # Example
 ```julia
 model = reflectinmodel(ds, d -> Dense(d, nclasses); all_imputing=true)
-result = explain(ShapleyExplainer(200), ds, model)  # explain the predicted class
+result = explain(ds, model)  # explain the predicted class, default scorer
 result.mask            # the pruned mask
 ds[result.mask]         # the pruned sample
 fraction_pruned(result) # how much of ds turned out to be unnecessary
 ```
 """
-function explain(scorer, ds::AbstractMillNode, model, class::Integer;
+function explain(ds::AbstractMillNode, model, class::Integer;
+    scorer::AbstractHeuristic=ShapleyExplainer(300),
     abs_tol=nothing, rel_tol=nothing,
     order::Union{HeuristicOrder,GreedyForward,Nothing}=nothing,
     levelbylevel::Bool=true,
     random_removal::Bool=true,
     finetune::Bool=true,
     rng::AbstractRNG=Random.default_rng())
+    _explain(ds, model, class, scorer;
+        abs_tol, rel_tol, order, levelbylevel, random_removal, finetune, rng)
+end
+
+function explain(ds::AbstractMillNode, model; kwargs...)
+    class = argmax(vec(model(ds)))
+    explain(ds, model, class; kwargs...)
+end
+
+"""
+    _explain(ds, model, class, scorer; abs_tol, rel_tol, order, levelbylevel, random_removal, finetune, rng)
+
+Internal worker behind [`explain`](@ref). Not exported. Kept separate
+from `explain` (which only handles keyword defaults) so it can grow
+additional methods dispatching on `scorer`'s type later, without changing
+`explain`'s public signature.
+"""
+function _explain(ds::AbstractMillNode, model, class::Integer, scorer::AbstractHeuristic;
+    abs_tol, rel_tol, order, levelbylevel, random_removal, finetune, rng)
     o0 = vec(model(ds))
     length(o0) >= 2 || error(
         "explain: model(ds) has only $(length(o0)) output(s); explain() " *
@@ -254,9 +284,4 @@ function explain(scorer, ds::AbstractMillNode, model, class::Integer;
 
     ExplanationResult(result.mask, class, Float64(cg), Float64(remaining_cg),
         Float64(threshold), result.n_total, result.n_kept)
-end
-
-function explain(scorer, ds::AbstractMillNode, model; kwargs...)
-    class = argmax(vec(model(ds)))
-    explain(scorer, ds, model, class; kwargs...)
 end

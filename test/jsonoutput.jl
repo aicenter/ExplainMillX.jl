@@ -169,7 +169,7 @@ end
         ds = e(samples[1]; store_input=Val(true))
 
         Random.seed!(7)
-        result = explain(ShapleyExplainer(60), ds, model; rel_tol=0.9)
+        result = explain(ds, model; scorer=ShapleyExplainer(60), rel_tol=0.9)
         out = explain_json(ds, result.mask, e)
 
         # Fixed number of assertions regardless of what pruning happened to
