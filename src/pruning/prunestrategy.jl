@@ -1,4 +1,4 @@
-# The PruningStrategy/prune! driver (doc/design/pruning.md §3.1, §4),
+# The PruningStrategy/prune! driver (docs/design/pruning.md §3.1, §4),
 # composing the local-search primitives (localsearch.jl) over FlatView
 # (flatview.md) along the order/granularity/post-pass axes.
 
@@ -18,7 +18,7 @@ Order strategy: candidates are sorted by a precomputed importance score and
 added via bisection (`addminimumbi!`). `scores` is built once, by the
 caller, via `nodescores(mask, acctree, score)` right after scoring --
 `prune!`/`PruningStrategy` never reference `AccTree` or a scoring-strategy
-type at all (`doc/design/pruning.md` §3.3, §4, Part 2 of the driver
+type at all (`docs/design/pruning.md` §3.3, §4, Part 2 of the driver
 discussion).
 """
 struct HeuristicOrder
@@ -29,7 +29,7 @@ end
     PruningStrategy{Order}(order, levelbylevel, random_removal, finetune)
 
 Every axis is a required, explicit field -- no hidden defaults -- per
-`doc/design/pruning.md` §3.6 (a naming/behavior mismatch in the original
+`docs/design/pruning.md` §3.6 (a naming/behavior mismatch in the original
 was traced directly to a post-pass silently defaulting on inside an
 unrelated function).
 
@@ -75,7 +75,7 @@ Julia's `!`-function convention.
 
 `ds`/`model` are accepted uniformly for every strategy even though only a
 future gradient-based order would use them, to avoid a breaking signature
-change later (`doc/design/pruning.md` §3.1).
+change later (`docs/design/pruning.md` §3.1).
 
 # Design contract
 

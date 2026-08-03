@@ -1,6 +1,6 @@
 # Pruning Design
 
-**Status:** Draft — survey of prior art (`ExplainMill.jl`) complete; direction settled; `FlatView` (§3.1's flat adapter) implemented and tested (`doc/design/flatview.md`), local-search primitives and the strategy catalog below not yet implemented
+**Status:** Draft — survey of prior art (`ExplainMill.jl`) complete; direction settled; `FlatView` (§3.1's flat adapter) implemented and tested (`docs/design/flatview.md`), local-search primitives and the strategy catalog below not yet implemented
 **Audience:** Engineers implementing `ExplainMillX.jl`
 **Scope:** The pruning stage only — searching a mask for a minimal item subset that keeps an injected objective `f() ≥ 0`. Mask structure is covered in `masks.md`; the flat adapter pruning operates through is covered in `flatview.md`; the overall pipeline and objective-injection contract are covered in `design.doc` §4.
 

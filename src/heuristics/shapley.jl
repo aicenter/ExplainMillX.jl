@@ -42,7 +42,7 @@ Monte Carlo Shapley/Banzhaf-style scoring strategy: repeatedly randomizes
 the whole mask, evaluates `objective(model(ds[mask]))`, and accumulates a
 `MeanDiff` per unit. Exists primarily to exercise the mask infrastructure
 end to end (random sampling, participation, hard pruning, paired
-bookkeeping traversal) -- see `doc/design/pruning.md` for where this fits
+bookkeeping traversal) -- see `docs/design/pruning.md` for where this fits
 relative to a production scoring strategy.
 """
 struct ShapleyExplainer <: AbstractHeuristic

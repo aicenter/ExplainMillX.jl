@@ -1,6 +1,6 @@
 # Converting a pruned StructMask back into a JSON-shaped value, using a
 # JsonGrinder extractor and the sample's preserved `.metadata`. See
-# doc/design/jsonoutput.md for the full design rationale; this file
+# docs/design/jsonoutput.md for the full design rationale; this file
 # implements it directly.
 #
 # `PolymorphExtractor` and `ProductNode{<:Tuple}` are explicitly out of
@@ -10,7 +10,7 @@
 _metadata_missing_error(ds) = error(
     "explain_json: no metadata on a $(nameof(typeof(ds))) leaf -- re-extract " *
     "with `store_input=Val(true)` so explain_json has original values to " *
-    "reconstruct (see doc/design/jsonoutput.md §2)",
+    "reconstruct (see docs/design/jsonoutput.md §2)",
 )
 
 """
@@ -91,7 +91,7 @@ end
 
 _explain_json(::AbstractMillNode, ::StructMask, e::JsonGrinder.PolymorphExtractor) = error(
     "explain_json: PolymorphExtractor is not supported (deliberately deferred, " *
-    "see doc/design/jsonoutput.md §4.1)",
+    "see docs/design/jsonoutput.md §4.1)",
 )
 
 _explain_json(::AbstractMillNode, ::StructMask, e) = error(
@@ -143,7 +143,7 @@ general, something else; whether an `ArrayNode` came from a categorical,
 n-gram, or scalar field).
 
 `ds` must represent a single sample (`numobs(ds) == 1`) -- `explain_json`
-has no batching support (`doc/design/jsonoutput.md` §5), matching the rest
+has no batching support (`docs/design/jsonoutput.md` §5), matching the rest
 of `ExplainMillX`.
 
 `PolymorphExtractor` and `ProductNode{<:Tuple}` (JsonGrinder's

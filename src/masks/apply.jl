@@ -3,7 +3,7 @@
 
 Hard-prune `ds` according to `m`, returning a new (smaller / missing-valued)
 sample. Never mutates `ds`. This is the one place per-storage-format
-knowledge is unavoidable (see `doc/design/masks.md` §6) -- each Mill
+knowledge is unavoidable (see `docs/design/masks.md` §6) -- each Mill
 leaf-array type needs its own method because a dense `Matrix`, a
 `SparseMatrixCSC`, a `MaybeHotMatrix`, and an `NGramMatrix` each need
 genuinely different code to represent "this unit is absent."

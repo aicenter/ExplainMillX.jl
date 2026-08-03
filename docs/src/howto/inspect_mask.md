@@ -27,7 +27,7 @@ end
 node in the tree, in depth order (`level` starts at 1 at the root and
 increases going deeper -- see the note on router nodes "consuming" a
 level number without contributing an entry, in
-`doc/design/masks.md` if you need the exact semantics).
+`docs/design/masks.md` if you need the exact semantics).
 
 ## Aggregate statistics without JSON
 

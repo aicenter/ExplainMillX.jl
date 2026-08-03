@@ -2,7 +2,7 @@
     updateparticipation!(ds::AbstractMillNode, m::StructMask)
 
 Recompute, for every node in `m`, whether its units are currently reachable
-given the *current* state of ancestor masks (see `doc/design/masks.md` §5).
+given the *current* state of ancestor masks (see `docs/design/masks.md` §5).
 Resets everything to participating, then propagates invalidity top-down via
 `invalidate!`, which is dispatched on `ds`'s type since the index-space
 translation between a node and its children (e.g. bag membership, sparse

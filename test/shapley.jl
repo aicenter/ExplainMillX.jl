@@ -1,6 +1,6 @@
 # Exercises the mask infrastructure end to end (random sampling, hard
 # pruning, participation, paired bookkeeping traversal) via a Monte Carlo
-# Shapley-style scoring strategy, per doc/design/masks.md §8.
+# Shapley-style scoring strategy, per docs/design/masks.md §8.
 
 @testset "ShapleyExplainer" begin
     @testset "repeatability given a fixed rng" begin

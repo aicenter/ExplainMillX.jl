@@ -11,7 +11,7 @@ determined by which fields are populated (not by subtyping):
 `V<:AbstractVector` signals at the type level whether the mask is binary
 (`V<:AbstractVector{Bool}`) or differentiable (`V<:AbstractVector{<:Real}`).
 
-See `doc/design/masks.md` for the full design rationale.
+See `docs/design/masks.md` for the full design rationale.
 """
 struct StructMask{C,V<:AbstractVector}
     own::Union{Nothing,V}

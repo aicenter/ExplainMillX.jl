@@ -1,4 +1,4 @@
-# Tests for the local-search primitives (doc/design/pruning.md §2.1, §3.8),
+# Tests for the local-search primitives (docs/design/pruning.md §2.1, §3.8),
 # ported onto FlatView. Most tests use small synthetic weighted-sum
 # objectives over a plain ArrayNode's FlatView -- deliberately no model
 # involved -- so the search mechanics can be checked exactly and
@@ -104,7 +104,7 @@
 
     @testset "greedyremoval! deterministic least-damaging removal" begin
         # weights [5,4,3,2,1], threshold sum >= 6, starting all-on.
-        # Worked out by hand in doc/design/pruning.md-adjacent design
+        # Worked out by hand in docs/design/pruning.md-adjacent design
         # discussion: greedy removal (lightest weight first) converges to
         # items {1,2} (weights 5,4, sum=9), since removing item 2 next
         # would drop the sum to 5 < 6.
@@ -150,7 +150,7 @@
         )
         # settobest! ties among equal-length feasible sets by lowest score
         # (ported unchanged from the original; the tie-break criterion
-        # itself has no strong rationale, see doc/design/pruning.md, but
+        # itself has no strong rationale, see docs/design/pruning.md, but
         # behavior must match what's implemented)
         settobest!(fv, visited)
         @test prunemask(fv) == Bool[1, 1, 0, 0]
@@ -164,7 +164,7 @@
 
     @testset "addone!'s default candidates are unrestricted (caller decides)" begin
         # since the participate-filter moved from an internal default to an
-        # explicit `candidates` argument (doc/design/pruning.md §4, Part 4),
+        # explicit `candidates` argument (docs/design/pruning.md §4, Part 4),
         # addone! with no candidates given must be willing to turn on a
         # non-participating item -- restricting to participating items is
         # now the driver's job, not addone!'s.

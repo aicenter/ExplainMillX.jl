@@ -1,4 +1,4 @@
-# Tests for FlatView per doc/design/flatview.md: aliasing (§1.2), the basic
+# Tests for FlatView per docs/design/flatview.md: aliasing (§1.2), the basic
 # API (§2), the identity-keyed heuristic-score lookup / "Option B" (§3), and
 # the level-by-level construction + participation interplay (§4, §5).
 

@@ -59,7 +59,7 @@ makedocs(;
 # remote (`git remote -v` is currently empty) and a CI workflow to run it
 # from. Add once the repository has a home:
 #
-# deploydocs(;
-#     repo="github.com/<org>/ExplainMillX.jl",
-#     devbranch="main",
-# )
+deploydocs(;
+    repo="github.com/aicenter/ExplainMillX.jl",
+    devbranch="master",
+)

@@ -1,5 +1,5 @@
 # Local-search primitives operating on a `FlatView`, ported from
-# `ExplainMill.jl`'s `src/pruning/utils.jl` (see `doc/design/pruning.md`
+# `ExplainMill.jl`'s `src/pruning/utils.jl` (see `docs/design/pruning.md`
 # §2.1, §3.8). `f` is always a zero-argument objective closure (`design.doc`
 # §4.1): positive/nonnegative means the current state of `fv` still
 # satisfies the explanation's tolerance.
@@ -25,7 +25,7 @@ evaluations of `f`, relying on `order` being roughly monotonic in effect --
 does not itself guarantee `f() ≥ 0` is reachable at all (if turning on
 every item in `order` still leaves `f() < 0`, this returns having done its
 best; surfacing that as non-convergence is the driver's responsibility, see
-`doc/design/pruning.md` §3.7).
+`docs/design/pruning.md` §3.7).
 """
 function addminimumbi!(f, fv::FlatView, order::AbstractVector{<:Integer})
     f() > 0 && return false
@@ -60,7 +60,7 @@ by `participate(fv)` internally -- restricting to participating items is
 the *driver*'s responsibility (pass `findall(participate(fv))` explicitly
 for level-by-level pruning), since for flat-granularity pruning
 `participate` may hold stale state from a prior scoring pass and shouldn't
-be consulted at all; see `doc/design/pruning.md` §4 (Part 4).
+be consulted at all; see `docs/design/pruning.md` §4 (Part 4).
 """
 function addone!(f, fv::FlatView, candidates::AbstractVector{<:Integer}=1:length(fv))
     remaining = setdiff(candidates, useditems(fv))

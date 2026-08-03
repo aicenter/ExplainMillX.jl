@@ -1,7 +1,7 @@
 # Top-level convenience entry points tying scoring (`stats`) and pruning
 # (`prune!`) together for the common case: explaining a single Mill.jl
 # sample's predicted class under a softmax/multi-class model. See
-# `doc/design/design.doc` §4.1 for the objective-injection design this is
+# `docs/design/design.doc` §4.1 for the objective-injection design this is
 # built on, and `examples/mutagenesis.jl` for a from-scratch worked example
 # of wiring these pieces by hand (useful background for anyone modifying
 # this file, and the reason this file exists at all).
@@ -63,7 +63,7 @@ prediction confidence was retained.
 - `threshold::Float64`: the minimum confidence gap pruning was required to
   preserve, derived from `abs_tol`/`rel_tol` (see [`explain`](@ref)).
 - `n_total::Int`: total number of maskable items in the sample (features,
-  bag instances, categorical values, ... -- see `doc/design/masks.md` §3).
+  bag instances, categorical values, ... -- see `docs/design/masks.md` §3).
 - `n_kept::Int`: how many of those items survived pruning.
 
 Use [`fraction_kept`](@ref)/[`fraction_pruned`](@ref)/[`n_pruned`](@ref)
@@ -118,7 +118,7 @@ end
 
 Low-level entry point: explain `ds` under `model` using scoring strategy
 `scorer` and caller-supplied objectives, bypassing the classification
-convenience layer entirely (`doc/design/design.doc` §4.1). Use this
+convenience layer entirely (`docs/design/design.doc` §4.1). Use this
 directly for anything [`explain`](@ref) doesn't cover -- e.g. a binary
 sigmoid head, a regression target, or a custom notion of "confidence"
 (see `examples/mutagenesis.jl` for a full worked example of exactly this).
@@ -141,16 +141,16 @@ afterward -- `explain` does exactly that for its final result.
 
 # Keyword arguments
 - `order::Union{HeuristicOrder,GreedyForward,Nothing} = nothing`: the
-  pruning search order (`doc/design/pruning.md` §4). `nothing` (the
+  pruning search order (`docs/design/pruning.md` §4). `nothing` (the
   default) builds a `HeuristicOrder` automatically from the scoring
   result via `nodescores`; pass `GreedyForward()` to use stepwise greedy
   selection instead, or a pre-built `HeuristicOrder` to reuse scores from
   elsewhere.
 - `levelbylevel::Bool = true`: search one hierarchy depth at a time
-  (generally faster in practice, `doc/design/pruning.md` §2.2) rather than
+  (generally faster in practice, `docs/design/pruning.md` §2.2) rather than
   the whole tree at once.
 - `random_removal::Bool = true`, `finetune::Bool = true`: optional
-  redundancy-removal and local-search post-passes (`doc/design/pruning.md`
+  redundancy-removal and local-search post-passes (`docs/design/pruning.md`
   §4.5, §4.6).
 - `rng::AbstractRNG = Random.default_rng()`: random number generator
   threaded through the (stochastic) scoring strategy, for reproducibility.
@@ -205,7 +205,7 @@ This is the full pipeline in one call:
    via `scorer` (e.g. `ShapleyExplainer`) -- see `masks.md` §8.
 3. **Prune**: search for a small item subset keeping the confidence gap
    above a threshold derived from `abs_tol`/`rel_tol` -- see
-   `doc/design/pruning.md`.
+   `docs/design/pruning.md`.
 4. **Report**: package the result together with how much of the sample
    was pruned away, as an [`ExplanationResult`](@ref).
 

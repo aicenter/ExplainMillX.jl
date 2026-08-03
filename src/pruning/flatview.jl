@@ -9,7 +9,7 @@ writes the real mask directly, with no copying or reconciliation step.
 
 Deliberately blind to tree shape (it only needs "which nodes, in what
 order") and to scoring/`AccTree` (see `nodescores`/`heuristicscores` for how
-those connect back in). See `doc/design/flatview.md` for the full rationale.
+those connect back in). See `docs/design/flatview.md` for the full rationale.
 """
 struct FlatView
     itemmap::Vector{Tuple{StructMask,Int}}
@@ -93,7 +93,7 @@ prunemask(fv::FlatView) = [_itemmask(node, li) for (node, li) in fv.itemmap]
     participate(fv::FlatView)
 
 The aggregated boolean reachability view across every item in `fv`, in flat
-order (see `doc/design/flatview.md` §5).
+order (see `docs/design/flatview.md` §5).
 """
 participate(fv::FlatView) = [node.participate[li] for (node, li) in fv.itemmap]
 

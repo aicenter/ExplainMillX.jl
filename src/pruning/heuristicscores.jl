@@ -1,7 +1,7 @@
 """
     nodescores(mask::StructMask, acc::AccTree, scorefn) -> IdDict{StructMask,Vector{Float64}}
 
-Build the identity-keyed lookup from `doc/design/flatview.md` §3 ("Option
+Build the identity-keyed lookup from `docs/design/flatview.md` §3 ("Option
 B"): walk `mask` and `acc` together (via `foreach_paired`, so they must have
 been built from one another and share structure) and record, per
 own-bearing node -- keyed by object identity, not value -- the plain
@@ -31,7 +31,7 @@ node identity rather than position.
 
 Raises `KeyError` if a node in `fv` isn't present in `scores` -- this means
 `fv` was built over a mask tree that isn't (object-)identical to the one
-`scores` was built from; see `doc/design/flatview.md` §3.1.
+`scores` was built from; see `docs/design/flatview.md` §3.1.
 """
 function heuristicscores(fv::FlatView, scores::IdDict{StructMask,Vector{Float64}})
     map(fv.itemmap) do (node, li)

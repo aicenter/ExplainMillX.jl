@@ -3,7 +3,7 @@
 
 Build a `StructMask` mirroring `ds`. `mk` is a leaf factory `d -> own_vector`
 of length `d`; the caller selects binary vs. differentiable masks entirely
-through what `mk` returns (see `doc/design/masks.md` §3.2).
+through what `mk` returns (see `docs/design/masks.md` §3.2).
 
 What `own`'s units mean is storage-format specific, matching the granularity
 at which it is natural to explain that format:

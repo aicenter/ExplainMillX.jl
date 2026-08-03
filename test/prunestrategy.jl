@@ -1,4 +1,4 @@
-# Tests for PruningStrategy/prune! (doc/design/pruning.md §3.1, §4), built
+# Tests for PruningStrategy/prune! (docs/design/pruning.md §3.1, §4), built
 # on the same synthetic weighted-sum style used in test/localsearch.jl for
 # controlled, deterministic checks, plus an end-to-end test against a real
 # Mill model exercising every (order, granularity) combination together.

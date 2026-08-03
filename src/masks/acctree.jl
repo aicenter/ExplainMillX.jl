@@ -2,7 +2,7 @@
     AccTree{P,C}
 
 Per-unit scoring bookkeeping, kept entirely separate from `StructMask` (see
-`doc/design/masks.md` §8). Mirrors the shape of the `StructMask` it was built
+`docs/design/masks.md` §8). Mirrors the shape of the `StructMask` it was built
 from, carrying whatever payload a scoring strategy needs -- the model never
 sees this type.
 """

@@ -1,9 +1,9 @@
 # Adapted from ExplainMill.jl/test/structuralmasks.jl to the StructMask design
-# in doc/design/masks.md. Kept in spirit, not verbatim -- scope intentionally
+# in docs/design/masks.md. Kept in spirit, not verbatim -- scope intentionally
 # narrower than the original for this step:
 #   - hard (missing-based) pruning only; no differentiable/soft masking or
 #     gradient checks (masks.md §6.2, deferred)
-#   - no `partialeval` tests (a pruning-stage concern, see doc/design/pruning.md)
+#   - no `partialeval` tests (a pruning-stage concern, see docs/design/pruning.md)
 #   - no `ObservationMask`-equivalent alternate-axis tests (masks.md §7, open)
 #   - no leader/follower `FollowingMasks` tests (not part of the finalized
 #     StructMask design)

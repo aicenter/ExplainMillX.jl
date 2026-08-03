@@ -1,4 +1,4 @@
-# Tests for explain_json (doc/design/jsonoutput.md), covering each
+# Tests for explain_json (docs/design/jsonoutput.md), covering each
 # extractor-type dispatch case, the cleanup pass, the metadata precondition,
 # and the explicitly-unsupported extractor paths, plus a full
 # explain()+explain_json() integration test.
