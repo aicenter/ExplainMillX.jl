@@ -19,24 +19,66 @@ struct StructMask{C,V<:AbstractVector}
     children::C
 end
 
+"""
+    leafmask(own::AbstractVector) -> StructMask
+
+Build a leaf `StructMask` (no children) with maskable units `own`.
+"""
 leafmask(own::V) where {V<:AbstractVector} =
     StructMask{Nothing,V}(own, trues(length(own)), nothing)
 
+"""
+    hybridmask(own::AbstractVector, children) -> StructMask
+
+Build a hybrid `StructMask` that both has its own maskable units `own`
+(e.g. a `BagNode`'s instances) and a nested `children` mask.
+"""
 hybridmask(own::V, children::C) where {V<:AbstractVector,C} =
     StructMask{C,V}(own, trues(length(own)), children)
 
-# routers have no own mask; V is unused for these nodes, pinned arbitrarily
+"""
+    routermask(children) -> StructMask
+
+Build a router `StructMask` (no own units, e.g. a `ProductNode`) that
+only routes to named/positional `children` masks.
+"""
 routermask(children::C) where {C} =
+    # routers have no own mask; V is unused for these nodes, pinned arbitrarily
     StructMask{C,Vector{Bool}}(nothing, nothing, children)
 
+"""
+    isleaf(m::StructMask) -> Bool
+
+`true` if `m` has no nested children (`m.children === nothing`).
+"""
 isleaf(m::StructMask) = m.children === nothing
+
+"""
+    isrouter(m::StructMask) -> Bool
+
+`true` if `m` has no own maskable units (`m.own === nothing`), i.e. it
+only routes to children (e.g. a `ProductNode`'s mask).
+"""
 isrouter(m::StructMask) = m.own === nothing
 
 prunemask(m::StructMask{<:Any,<:AbstractVector{Bool}}) = m.own
 prunemask(m::StructMask{<:Any,<:AbstractVector{<:Real}}) = m.own .> 0.5f0
 
+"""
+    participate(m::StructMask) -> Vector{Bool}
+
+Per-item reachability: `true` for units of `m` currently reachable from
+the root given the current state of ancestor masks. See `updateparticipation!`.
+"""
 participate(m::StructMask) = m.participate
 
+"""
+    softvalue(m::StructMask) -> AbstractVector{<:Real}
+
+The continuous `[0,1]`-valued view of `m`'s mask, for gradient-based
+strategies. Errors if `m` is a binary (`Vector{Bool}`) mask -- use
+`prunemask` for the boolean view instead.
+"""
 softvalue(m::StructMask{<:Any,<:AbstractVector{<:Real}}) = m.own
 softvalue(m::StructMask{<:Any,<:AbstractVector{Bool}}) = error(
     "mask is Vector{Bool} (binary, non-differentiable); a Real-valued mask " *

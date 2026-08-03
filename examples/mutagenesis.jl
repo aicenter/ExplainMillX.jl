@@ -6,8 +6,7 @@ A complete, runnable example in three parts:
 
   1. Download the Mutagenesis dataset (cached locally).
   2. Train a Mill.jl model on it -- a condensed version of the official
-     JsonGrinder.jl tutorial:
-     https://ctuavastlab.github.io/JsonGrinder.jl/stable/examples/mutagenesis/mutagenesis/
+     [JsonGrinder.jl tutorial:](https://ctuavastlab.github.io/JsonGrinder.jl/stable/examples/mutagenesis/mutagenesis/)
   3. Explain one of the model's predictions using ExplainMillX's top-level
      `explain(...)` convenience function.
   4. Walk through what `explain(...)` actually does internally, step by

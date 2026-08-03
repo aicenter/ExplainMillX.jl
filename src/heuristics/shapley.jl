@@ -26,6 +26,13 @@ function update!(a::MeanDiff, value::Real, on::Bool)
     a
 end
 
+"""
+    score(a::MeanDiff) -> Float64
+
+The estimated importance of the unit `a` accumulates statistics for: the
+mean objective value observed when the unit was on, minus the mean when
+it was off. `0.0` if the unit has never been observed both on and off.
+"""
 score(a::MeanDiff) = (a.n1 == 0 || a.n0 == 0) ? 0.0 : a.sum1 / a.n1 - a.sum0 / a.n0
 
 """

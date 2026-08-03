@@ -12,6 +12,13 @@ struct AccTree{P,C}
 end
 
 
+"""
+    create_acctree(m::StructMask, make_payload) -> AccTree
+
+Build an `AccTree` mirroring the shape of `m`, calling
+`make_payload(d)` (`d` = number of maskable units) at every own-bearing
+node to construct that node's bookkeeping payload.
+"""
 function create_acctree(m::StructMask, make_payload)
     children = _mapchildren_acc(m.children, make_payload)
     if m.own === nothing
