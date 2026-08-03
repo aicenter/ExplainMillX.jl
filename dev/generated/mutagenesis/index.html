@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Tutorial: Mutagenesis · ExplainMillX.jl</title><meta name="title" content="Tutorial: Mutagenesis · ExplainMillX.jl"/><meta property="og:title" content="Tutorial: Mutagenesis · ExplainMillX.jl"/><meta property="twitter:title" content="Tutorial: Mutagenesis · ExplainMillX.jl"/><meta name="description" content="Documentation for ExplainMillX.jl."/><meta property="og:description" content="Documentation for ExplainMillX.jl."/><meta property="twitter:description" content="Documentation for ExplainMillX.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ExplainMillX.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li class="is-active"><a class="tocitem" href>Tutorial: Mutagenesis</a></li><li><span class="tocitem">How-to Guides</span><ul><li><a class="tocitem" href="../../howto/explain_prediction/">Explain a single prediction</a></li><li><a class="tocitem" href="../../howto/explain_nonsoftmax/">Explain a binary or non-softmax model</a></li><li><a class="tocitem" href="../../howto/json_output/">Get a JSON explanation</a></li><li><a class="tocitem" href="../../howto/choose_pruning_strategy/">Choose a pruning strategy</a></li><li><a class="tocitem" href="../../howto/reproducibility/">Make explanations reproducible</a></li><li><a class="tocitem" href="../../howto/performance/">Speed up explanation of large samples</a></li><li><a class="tocitem" href="../../howto/inspect_mask/">Inspect a pruned mask directly</a></li></ul></li><li><span class="tocitem">Explanation</span><ul><li><a class="tocitem" href="../../explanation/what_is_explanation/">What &quot;explaining a prediction&quot; means here</a></li><li><a class="tocitem" href="../../explanation/scoring_and_pruning/">How scoring and pruning fit together</a></li><li><a class="tocitem" href="../../explanation/confidence_gap/">Confidence gap and tolerance</a></li><li><a class="tocitem" href="../../explanation/hierarchy_and_masks/">Why hierarchy matters: masks respect a sample&#39;s structure</a></li><li><a class="tocitem" href="../../explanation/non_uniqueness/">Why explanations aren&#39;t unique</a></li><li><a class="tocitem" href="../../explanation/limitations/">Limitations of perturbation-based explanation</a></li></ul></li><li><a class="tocitem" href="../../reference/">API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Tutorial: Mutagenesis</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Tutorial: Mutagenesis</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Mutagenesis-walk-through-for-ExplainMillX.jl"><a class="docs-heading-anchor" href="#Mutagenesis-walk-through-for-ExplainMillX.jl">Mutagenesis walk-through for ExplainMillX.jl</a><a id="Mutagenesis-walk-through-for-ExplainMillX.jl-1"></a><a class="docs-heading-anchor-permalink" href="#Mutagenesis-walk-through-for-ExplainMillX.jl" title="Permalink"></a></h1><p>A complete, runnable example in three parts:</p><ol><li>Download the Mutagenesis dataset (cached locally).</li><li>Train a Mill.jl model on it – a condensed version of the official <a href="https://ctuavastlab.github.io/JsonGrinder.jl/stable/examples/mutagenesis/mutagenesis/">JsonGrinder.jl tutorial:</a></li><li>Explain one of the model&#39;s predictions using ExplainMillX&#39;s top-level <code>explain(...)</code> convenience function.</li><li>Walk through what <code>explain(...)</code> actually does internally, step by step: score importance with <code>ShapleyExplainer</code>, prune with <code>PruningStrategy</code>/<code>prune!</code>, and print which atoms/bonds/descriptors the model actually needed to keep its prediction.</li></ol><p>Run with:     julia –project=examples examples/mutagenesis.jl</p><pre><code class="language-julia hljs">using HTTP
+using JSON
+using JsonGrinder
+using Mill
+using Flux
+using MLUtils
+using Statistics
+using Printf
+using Random
+using ExplainMillX
+
+Random.seed!(42)
+
+# ---------------------------------------------------------------------
+# 1. Download the data (cached locally so re-runs don&#39;t re-download)
+# ---------------------------------------------------------------------
+
+const DATA_DIR = joinpath(@__DIR__, &quot;data&quot;)
+const DATA_PATH = joinpath(DATA_DIR, &quot;mutagenesis.json&quot;)
+const DATA_URL = &quot;https://raw.githubusercontent.com/CTUAvastLab/JsonGrinder.jl/master/docs/src/examples/mutagenesis/mutagenesis.json&quot;
+
+function ensure_data!(path=DATA_PATH, url=DATA_URL)
+    if !isfile(path)
+        mkpath(dirname(path))
+        @info &quot;Downloading Mutagenesis dataset&quot; url path
+        resp = HTTP.get(url)
+        write(path, resp.body)
+    end
+    path
+end
+
+ensure_data!()
+
+# ---------------------------------------------------------------------
+# 2. Train a Mill.jl model (condensed from the JsonGrinder.jl tutorial)
+# ---------------------------------------------------------------------
+
+dataset = JSON.parsefile(DATA_PATH)
+jss_train, jss_test = dataset[1:100], dataset[101:end]
+y_train = Flux.onehotbatch(getindex.(jss_train, &quot;mutagenic&quot;), 0:1)
+y_test = Flux.onehotbatch(getindex.(jss_test, &quot;mutagenic&quot;), 0:1)</code></pre><pre><code class="nohighlight hljs">2×88 OneHotMatrix(::Vector{UInt32}) with eltype Bool:
+ 1  ⋅  ⋅  ⋅  ⋅  ⋅  ⋅  ⋅  ⋅  ⋅  ⋅  1  ⋅  ⋅  ⋅  ⋅  1  ⋅  1  ⋅  1  1  ⋅  1  ⋅  1  ⋅  ⋅  ⋅  ⋅  ⋅  ⋅  ⋅  1  ⋅  ⋅  ⋅  ⋅  ⋅  1  ⋅  ⋅  ⋅  ⋅  ⋅  ⋅  ⋅  1  ⋅  ⋅  1  1  ⋅  ⋅  ⋅  1  1  ⋅  ⋅  1  ⋅  ⋅  1  1  1  ⋅  ⋅  ⋅  ⋅  ⋅  ⋅  1  ⋅  ⋅  ⋅  1  1  1  ⋅  ⋅  ⋅  ⋅  ⋅  ⋅  ⋅  ⋅  1  ⋅
+ ⋅  1  1  1  1  1  1  1  1  1  1  ⋅  1  1  1  1  ⋅  1  ⋅  1  ⋅  ⋅  1  ⋅  1  ⋅  1  1  1  1  1  1  1  ⋅  1  1  1  1  1  ⋅  1  1  1  1  1  1  1  ⋅  1  1  ⋅  ⋅  1  1  1  ⋅  ⋅  1  1  ⋅  1  1  ⋅  ⋅  ⋅  1  1  1  1  1  1  ⋅  1  1  1  ⋅  ⋅  ⋅  1  1  1  1  1  1  1  1  ⋅  1</code></pre><p>Infer the JSON schema, then drop the label field (it isn&#39;t a feature).</p><pre><code class="language-julia hljs">sch = schema(jss_train)
+delete!(sch, :mutagenic)</code></pre><pre><code class="nohighlight hljs">Dict{Symbol, JsonGrinder.Schema} with 5 entries:
+  :lumo =&gt; LeafEntry
+  :inda =&gt; LeafEntry
+  :logp =&gt; LeafEntry
+  :ind1 =&gt; LeafEntry
+  :atoms =&gt; ArrayEntry</code></pre><p><code>all_stable=true</code> (unlike the original tutorial&#39;s default extractor) makes every field – not just ones the schema happens to see as optional – extract into a <code>MaybeHotMatrix</code>/<code>Union{Missing,...}</code> representation rather than a plain, never-missing <code>OneHotMatrix</code>. ExplainMillX represents &quot;this item is pruned away&quot; as <code>missing</code> (masks.md §6), so every field needs to be able to hold <code>missing</code> for masking to have something to do to it.</p><pre><code class="language-julia hljs">e = suggestextractor(sch; all_stable=true)
+
+x_train = extract(e, jss_train)
+x_test = extract(e, jss_test)</code></pre><pre><code class="nohighlight hljs">ProductNode  88 obs
+  ├─── lumo: ArrayNode(99×88 MaybeHotMatrix with Union{Missing, Bool} elements)  88 obs
+  ├─── inda: ArrayNode(2×88 MaybeHotMatrix with Union{Missing, Bool} elements)  88 obs
+  ├─── logp: ArrayNode(63×88 MaybeHotMatrix with Union{Missing, Bool} elements)  88 obs
+  ├─── ind1: ArrayNode(3×88 MaybeHotMatrix with Union{Missing, Bool} elements)  88 obs
+  ╰── atoms: BagNode  88 obs
+               ╰── ProductNode  2364 obs
+                     ├──── element: ArrayNode(7×2364 MaybeHotMatrix with Union{Missing, Bool} elements)  2364 obs
+                     ├────── bonds: BagNode  2364 obs
+                     │                ╰── ProductNode  5084 obs
+                     │                      ┊
+                     ├───── charge: ArrayNode(1×2364 Array with Union{Missing, Float32} elements)  2364 obs
+                     ╰── atom_type: ArrayNode(29×2364 MaybeHotMatrix with Union{Missing, Bool} elements)  2364 obs</code></pre><p><code>all_imputing=true</code> (again unlike the tutorial&#39;s default call) builds every <code>Dense</code> layer with an imputing weight matrix, so the model knows how to handle a <code>missing</code> input rather than only ever seeing complete molecules. This is required for <code>ds[mask]</code>&#39;s pruned samples to be evaluable by the model at all.</p><pre><code class="language-julia hljs">model = reflectinmodel(sch, e; all_imputing=true, fsm = Dict(&quot;&quot; =&gt; d -&gt; Chain(Dense(d,10,relu), Dense(10,2))))
+
+pred(m, x) = m(x)
+loss(m, x, y) = Flux.Losses.logitcrossentropy(m(x), y)
+opt_state = Flux.setup(Flux.Optimise.Descent(), model)
+minibatch_iterator = Flux.DataLoader((x_train, y_train), batchsize=32, shuffle=true)
+
+accuracy(p, y) = mean(Flux.onecold(p) .== Flux.onecold(y))
+for i in 1:50
+    Flux.train!(loss, model, minibatch_iterator, opt_state)
+    @printf(&quot;Epoch %d train_accuracy:  %.3f test_accuracy: %.3f\n&quot;,i, accuracy(pred(model, x_train), y_train), accuracy(pred(model, x_test), y_test))
+end
+
+# ---------------------------------------------------------------------
+# 3. Explain one prediction
+# ---------------------------------------------------------------------</code></pre><pre><code class="nohighlight hljs">Epoch 1 train_accuracy:  0.610 test_accuracy: 0.727
+Epoch 2 train_accuracy:  0.700 test_accuracy: 0.727
+Epoch 3 train_accuracy:  0.640 test_accuracy: 0.727
+Epoch 4 train_accuracy:  0.610 test_accuracy: 0.727
+Epoch 5 train_accuracy:  0.610 test_accuracy: 0.727
+Epoch 6 train_accuracy:  0.610 test_accuracy: 0.727
+Epoch 7 train_accuracy:  0.610 test_accuracy: 0.727
+Epoch 8 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 9 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 10 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 11 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 12 train_accuracy:  0.790 test_accuracy: 0.898
+Epoch 13 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 14 train_accuracy:  0.810 test_accuracy: 0.898
+Epoch 15 train_accuracy:  0.820 test_accuracy: 0.852
+Epoch 16 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 17 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 18 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 19 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 20 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 21 train_accuracy:  0.690 test_accuracy: 0.739
+Epoch 22 train_accuracy:  0.870 test_accuracy: 0.909
+Epoch 23 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 24 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 25 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 26 train_accuracy:  0.610 test_accuracy: 0.727
+Epoch 27 train_accuracy:  0.830 test_accuracy: 0.875
+Epoch 28 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 29 train_accuracy:  0.840 test_accuracy: 0.875
+Epoch 30 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 31 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 32 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 33 train_accuracy:  0.880 test_accuracy: 0.886
+Epoch 34 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 35 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 36 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 37 train_accuracy:  0.880 test_accuracy: 0.818
+Epoch 38 train_accuracy:  0.610 test_accuracy: 0.727
+Epoch 39 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 40 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 41 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 42 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 43 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 44 train_accuracy:  0.610 test_accuracy: 0.727
+Epoch 45 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 46 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 47 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 48 train_accuracy:  0.610 test_accuracy: 0.727
+Epoch 49 train_accuracy:  0.820 test_accuracy: 0.864
+Epoch 50 train_accuracy:  0.820 test_accuracy: 0.864
+</code></pre><p>Test molecule #14, correctly classified by this model. Re-extracted (rather than reusing <code>x_test</code>) with <code>store_input=Val(true)</code> so every leaf&#39;s <code>.metadata</code> carries the <em>original</em> JSON values (element names, atom types, charges, ...) – <code>applymask</code> preserves <code>.metadata</code> through pruning, which is what lets the final explanation below be printed in human-readable form instead of as raw one-hot/matrix data.</p><pre><code class="language-julia hljs">sample_idx = 14
+sample_json = jss_test[sample_idx]
+ds = e(sample_json; store_input=Val(true))</code></pre><pre><code class="nohighlight hljs">ProductNode  1 obs
+  ├─── lumo: ArrayNode(99×1 MaybeHotMatrix with Union{Missing, Bool} elements)  1 obs
+  ├─── inda: ArrayNode(2×1 MaybeHotMatrix with Union{Missing, Bool} elements)  1 obs
+  ├─── logp: ArrayNode(63×1 MaybeHotMatrix with Union{Missing, Bool} elements)  1 obs
+  ├─── ind1: ArrayNode(3×1 MaybeHotMatrix with Union{Missing, Bool} elements)  1 obs
+  ╰── atoms: BagNode  1 obs
+               ╰── ProductNode  30 obs
+                     ├──── element: ArrayNode(7×30 MaybeHotMatrix with Union{Missing, Bool} elements)  30 obs
+                     ├────── bonds: BagNode  30 obs
+                     │                ╰── ProductNode  66 obs
+                     │                      ┊
+                     ├───── charge: ArrayNode(1×30 Array with Union{Missing, Float32} elements)  30 obs
+                     ╰── atom_type: ArrayNode(29×30 MaybeHotMatrix with Union{Missing, Bool} elements)  30 obs</code></pre><p>The easiest way to explain the sample is to just call <code>explain</code>, which does everything below in one call: predicts the class, scores item importance, prunes, and reports how much of the sample was needed.</p><pre><code class="language-julia hljs">result = explain(ds, model)
+display(result)
+println()</code></pre><pre><code class="nohighlight hljs">┌ Warning: explain: no tolerance specified, defaulting to rel_tol=0.9
+└ @ ExplainMillX ~/work/ExplainMillX.jl/ExplainMillX.jl/src/explain.jl:25
+
+</code></pre><p>The library allows to export the pruned sample to JSON, but to do that the sample needs to be extracted with argument <code>store_input=Val(true)</code> as used above. This is indeed pretty convenient.</p><pre><code class="language-julia hljs">JSON.print(explain_json(ds, result.mask, e), 4)
+
+# ---------------------------------------------------------------------
+# 4. Explaining one prediction -- step by step
+# ---------------------------------------------------------------------</code></pre><pre><code class="nohighlight hljs">{
+    &quot;atoms&quot;: [
+        {
+            &quot;charge&quot;: 0.812
+        },
+        {
+            &quot;charge&quot;: 0.812
+        },
+        {
+            &quot;charge&quot;: -0.388,
+            &quot;element&quot;: &quot;o&quot;
+        },
+        {
+            &quot;atom_type&quot;: 27,
+            &quot;charge&quot;: 0.012,
+            &quot;element&quot;: &quot;c&quot;
+        }
+    ],
+    &quot;ind1&quot;: 1,
+    &quot;inda&quot;: 0,
+    &quot;logp&quot;: 4.44
+}</code></pre><p>Below, we show the explanation step by step, explaining the concrete machinery <code>explain(...)</code> above just did on our behalf – as literally as possible, so this section stays a faithful mirror of src/explain.jl rather than a simplified approximation of it. Intended for users who want to understand how the method actually works (or who need <code>explainf</code>&#39;s lower-level flexibility for something <code>explain</code> doesn&#39;t cover, e.g. a binary sigmoid head – see src/explain.jl&#39;s docstrings).</p><p><code>model</code>&#39;s head is a genuine 2-class softmax (Dense(10, 2) above), so &quot;confidence&quot; is the <em>gap</em> between the predicted class&#39;s probability and the runner-up&#39;s – not the raw probability – exactly what <code>explain</code> computes internally. Defined locally, matching ExplainMillX._confgap&#39;s formula exactly, so the mechanism is visible here rather than hidden behind an internal function call.</p><pre><code class="language-julia hljs">confgap(p, c) = p[c] - maximum(p[1:end.!=c])
+
+class = argmax(vec(model(ds)))
+p0 = softmax(vec(model(ds)))
+cg = confgap(p0, class)
+@info &quot;Explaining sample $sample_idx&quot; confidence_gap = cg predicted = class true_label = argmax(y_test[:, sample_idx])</code></pre><pre><code class="nohighlight hljs">┌ Info: Explaining sample 14
+│   confidence_gap = 0.88930297f0
+│   predicted = 2
+└   true_label = 2
+</code></pre><p>A real, honest finding from building this example: this quickly-trained model relies overwhelmingly on the four scalar molecular descriptors (lumo/logp/ind1/inda) for most predictions, so a looser <code>rel_tol</code> (e.g. 0.9) typically prunes the entire atoms/bonds structure away entirely – that&#39;s a genuine property of this model, not a limitation of the explainer. <code>rel_tol</code> is set tight (0.99) here so any residual atom-level signal has a chance to show up; because scoring is Monte Carlo (<code>ShapleyExplainer</code>), whether any specific atom&#39;s importance clears that bar can vary slightly run to run – the printed result below is whatever this run&#39;s explanation genuinely found, handled gracefully either way.</p><pre><code class="language-julia hljs">rel_tol = 0.99
+threshold = rel_tol * cg
+objective = o -&gt; softmax(vec(o))[class]</code></pre><pre><code class="nohighlight hljs">#5 (generic function with 1 method)</code></pre><p><code>explainf</code> strips <code>.metadata</code> before scoring/pruning (<code>Mill.dropmeta</code>): <code>stats</code>/<code>prune!</code> re-evaluate <code>model(ds[mask])</code> hundreds of times, the model never reads <code>.metadata</code> (it isn&#39;t part of <code>.data</code>), and applying a mask to a sample carrying metadata is measurably slower (roughly 2x per <code>applymask</code> call on a molecule this size) for zero benefit during the hot loop. The resulting mask is purely shape-derived, so it applies identically to the original, metadata-carrying <code>ds</code> afterward – which is exactly what lets Stage 3 below read real atom/bond values back out.</p><pre><code class="language-julia hljs">ds_nometa = Mill.dropmeta(ds)</code></pre><pre><code class="nohighlight hljs">ProductNode  1 obs
+  ├─── lumo: ArrayNode(99×1 MaybeHotMatrix with Union{Missing, Bool} elements)  1 obs
+  ├─── inda: ArrayNode(2×1 MaybeHotMatrix with Union{Missing, Bool} elements)  1 obs
+  ├─── logp: ArrayNode(63×1 MaybeHotMatrix with Union{Missing, Bool} elements)  1 obs
+  ├─── ind1: ArrayNode(3×1 MaybeHotMatrix with Union{Missing, Bool} elements)  1 obs
+  ╰── atoms: BagNode  1 obs
+               ╰── ProductNode  30 obs
+                     ├──── element: ArrayNode(7×30 MaybeHotMatrix with Union{Missing, Bool} elements)  30 obs
+                     ├────── bonds: BagNode  30 obs
+                     │                ╰── ProductNode  66 obs
+                     │                      ┊
+                     ├───── charge: ArrayNode(1×30 Array with Union{Missing, Float32} elements)  30 obs
+                     ╰── atom_type: ArrayNode(29×30 MaybeHotMatrix with Union{Missing, Bool} elements)  30 obs</code></pre><p>Stage 1: score every maskable item&#39;s importance via Monte Carlo Shapley values (masks.md §8). <code>stats</code> builds the mask internally; it comes back scored and ready for pruning.</p><pre><code class="language-julia hljs">mk, acctree = stats(ShapleyExplainer(150), ds_nometa, model, objective; rng=MersenneTwister(11))
+scores = nodescores(mk, acctree, score)   # identity-keyed lookup, flatview.md §3</code></pre><pre><code class="nohighlight hljs">IdDict{StructMask, Vector{Float64}} with 13 entries:
+  StructMask{Nothing, BitVector}(Bool[1], Bool[1], nothing) =&gt; [0.0279524]
+  StructMask{StructMask{@NamedTuple{element::StructMask{Nothing, BitVector}, bonds::StructMask{StructMask{@NamedTuple{element::StructMask{Nothing, BitVector}, bond_type::StructMask{Nothing, BitVector}, charge::StructMask{Nothing, BitVector}, atom_type::StructMask{Nothing, BitVector}}, Vector{Bool}}, BitVector}, charge::StructMask{Nothing, BitVector}, atom_type::StructMask{Nothing, BitVector}}, Vector{Bool}}, BitVector}(Bool[0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0], Bool[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], StructMask{@NamedTuple{element::StructMask{Nothing, BitVector}, bonds::StructMask{StructMask{@NamedTuple{element::StructMask{Nothing, BitVector}, bond_type::StructMask{Nothing, BitVector}, charge::StructMask{Nothing, BitVector}, atom_type::StructMask{Nothing, BitVector}}, Vector{Bool}}, BitVector}, charge::StructMask{Nothing, BitVector}, atom_type::StructMask{Nothing, BitVector}}, Vector{Bool}}(nothing, nothing, (element = StructMask{Nothing, BitVector}(Bool[0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0], Bool[0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0], nothing), bonds = StructMask{StructMask{@NamedTuple{element::StructMask{Nothing, BitVector}, bond_type::StructMask{Nothing, BitVector}, charge::StructMask{Nothing, BitVector}, atom_type::StructMask{Nothing, BitVector}}, Vector{Bool}}, BitVector}(Bool[0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1], Bool[0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0], StructMask{@NamedTuple{element::StructMask{Nothing, BitVector}, bond_type::StructMask{Nothing, BitVector}, charge::StructMask{Nothing, BitVector}, atom_type::StructMask{Nothing, BitVector}}, Vector{Bool}}(nothing, nothing, (element = StructMask{Nothing, BitVector}(Bool[1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0], Bool[0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0], nothing), bond_type = StructMask{Nothing, BitVector}(Bool[1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0], Bool[0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0], nothing), charge = StructMask{Nothing, BitVector}(Bool[0], Bool[1], nothing), atom_type = StructMask{Nothing, BitVector}(Bool[1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1], Bool[0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0], nothing)))), charge = StructMask{Nothing, BitVector}(Bool[1], Bool[1], nothing), atom_type = StructMask{Nothing, BitVector}(Bool[0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0], Bool[0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0], nothing)))) =&gt; [0.0135097, 0.00265741, 0.00154226, 0.020738, -0.00933494, -0.0178862, 0.0282703, 0.020601, -0.0195342, 2.20847e-5, -0.00585563, -0.00315248, -0.00267856, 0.012484, -0.00795806, 0.0203942, 0.0124837, 0.00699421, 0.0277331, 0.0415731, -0.000175487, 0.00836324, 0.00309195, -0.0129944, 0.0418446, -0.01529, 0.0266748, 0.00563637, 0.0241999, 0.0139911]
+  StructMask{Nothing, BitVector}(Bool[0], Bool[1], nothing) =&gt; [-0.0405711]
+  StructMask{Nothing, BitVector}(Bool[1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0], Bool[0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0], nothing) =&gt; [0.0649648, -0.0296105, -0.0189653, 0.00172106, 0.0293895, 0.0146818, 0.0249158, -0.0201987, 0.0342902, 0.00611028, 0.0710851, -0.0273961, 0.0934537, 0.0312484, 0.000430542, -0.00267963, -0.00250168, -0.00863872, -0.0123994, -0.0216886, -0.0253839, 0.00729609, -0.0231662, 0.0292081, 0.0498989, -0.00263753, 0.0165262, -0.032703, 0.0149456, -0.0271751, 0.031504, -0.0609509, -0.0168477, -0.0423555, -0.0390817, -0.0278362, 0.00314379, -0.0254397, -0.0256892, -0.0329311, -0.00630583, -0.0341553, -0.0307673, 0.0101285, 0.0272223, -0.00479982, 0.0218445, -0.0385135, 0.0343895, 0.0255816, -0.0106186, -0.0386143, 0.0242852, 0.0255976, 0.0634368, 0.0540459, 0.00607797, -0.0295372, -0.0387096, 0.0265264, 0.0063938, -0.0449601, -0.0301902, -0.0342071, -0.0109371, 0.0631993]
+  StructMask{Nothing, BitVector}(Bool[0], Bool[1], nothing) =&gt; [0.0632141]
+  StructMask{Nothing, BitVector}(Bool[1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0], Bool[0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0], nothing) =&gt; [0.0308622, -0.0160049, 0.0146618, -0.0140694, -0.00897468, 0.0162264, -0.0739157, 0.0290449, 0.0316863, -0.0501108, -0.0451949, -0.00662563, 0.0130288, 0.000369277, 0.0774028, -0.0175609, -0.033493, 0.0069664, 0.026383, 0.00497459, -0.0294374, 0.0271778, -0.00722475, -0.0234697, 0.0113041, -0.0253408, 0.043474, -0.0165543, 0.0134104, -0.0583954, 0.00810927, -0.0644313, -0.0445018, 0.00597284, 0.0411286, -0.0541377, -0.0218666, -0.0172624, 0.0292327, -0.0554673, 0.0173906, 0.0711856, 0.0829243, 0.0048317, 0.0605551, 0.0578926, -0.0374935, -0.00387143, 0.00153581, 0.0299043, 0.0100215, 0.0165662, 0.0122528, -0.0156582, -0.0270592, 0.0237297, -0.0573537, 0.00492466, -0.0185208, -0.0108928, 0.0400743, -0.0335057, 0.00140623, 0.0474029, -0.0377058, 0.0178228]
+  StructMask{Nothing, BitVector}(Bool[0], Bool[1], nothing) =&gt; [-0.0170868]
+  StructMask{Nothing, BitVector}(Bool[1], Bool[1], nothing) =&gt; [0.167197]
+  StructMask{Nothing, BitVector}(Bool[1], Bool[1], nothing) =&gt; [0.0237967]
+  StructMask{StructMask{@NamedTuple{element::StructMask{Nothing, BitVector}, bond_type::StructMask{Nothing, BitVector}, charge::StructMask{Nothing, BitVector}, atom_type::StructMask{Nothing, BitVector}}, Vector{Bool}}, BitVector}(Bool[0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1], Bool[0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0], StructMask{@NamedTuple{element::StructMask{Nothing, BitVector}, bond_type::StructMask{Nothing, BitVector}, charge::StructMask{Nothing, BitVector}, atom_type::StructMask{Nothing, BitVector}}, Vector{Bool}}(nothing, nothing, (element = StructMask{Nothing, BitVector}(Bool[1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0], Bool[0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0], nothing), bond_type = StructMask{Nothing, BitVector}(Bool[1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0], Bool[0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0], nothing), charge = StructMask{Nothing, BitVector}(Bool[0], Bool[1], nothing), atom_type = StructMask{Nothing, BitVector}(Bool[1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1], Bool[0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0], nothing)))) =&gt; [-0.0120504, 0.00205087, 0.0098847, 0.0372809, 0.0216493, 0.0121664, 0.0218495, 0.0300432, -0.00285337, -0.00813039, 0.0142509, 0.00325004, -0.0317011, 0.00499409, -0.000926673, 0.0099398, -0.033189, -0.0151161, -0.041076, -0.00504263, 0.0142892, -0.00920117, 0.0274311, -0.0143456, 0.00410302, -0.00444735, 0.0403075, -0.064047, 0.00412007, -0.0765662, -0.0395064, 0.0150802, 0.0245526, 0.0323317, 0.0219744, -0.0240421, -0.0172607, -0.0149857, -0.00217526, -0.0392414, 0.00103756, -0.0250746, -0.0249903, -0.00720338, -0.00182115, 0.0159324, 0.00555441, -0.00169447, -0.0207121, -0.01583, 0.0289533, -0.0868604, -0.0381776, -0.00113182, 0.0146682, 0.00594396, -0.000455783, -0.0698521, -0.0106328, 0.0376007, 0.00149931, -0.0167262, 0.0344597, -0.0122414, 0.0103925, 0.0154025]
+  StructMask{Nothing, BitVector}(Bool[0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0], Bool[0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0], nothing) =&gt; [0.0174721, -0.0289968, 0.0120863, -0.00413541, -0.0112265, 0.0237004, 0.0200188, -0.0191852, 0.000778796, 0.00269878, -0.00985666, -0.0343644, -0.00281043, 0.0349941, -0.0122989, -0.00678818, -0.00972613, -0.00767608, 0.00088937, 0.0422146, 0.00434288, 0.00516921, 0.0164271, 0.000318921, 0.00289134, 0.010832, -0.0336588, -0.012759, 0.0243186, -0.000647951]
+  StructMask{Nothing, BitVector}(Bool[0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0], Bool[0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0], nothing) =&gt; [0.00536477, 0.0165955, -0.00141496, -0.000716351, 0.0288032, 0.01907, -0.0109439, 0.0204186, -0.0320588, -0.015088, -0.0329889, -0.0041571, 0.00594278, -0.0198576, 0.00652005, -0.038526, 0.0120942, -0.000379664, -0.0163922, 0.0125218, 0.00360763, 0.0290575, -0.012036, 0.0331534, -0.00419716, -0.0349528, -0.00440905, 0.0510103, -0.00636259, -0.00822159]
+  StructMask{Nothing, BitVector}(Bool[1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1], Bool[0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0], nothing) =&gt; [0.0616069, 0.0504963, -0.0578336, 0.0710557, -0.0153212, 0.0391668, 0.0112046, -0.0151794, 0.00812462, 0.0743775, 0.00336441, 0.0364797, 0.00954657, -0.0182135, 0.0318097, 0.0495887, 0.0499585, 0.0212526, 0.00477242, 0.0522761, -0.0324223, -0.0132901, 0.00051891, -0.0132985, -0.00751147, -0.0218695, 0.00184383, 0.0219735, -0.0420722, 0.0177575, -0.0372724, -0.075742, 0.0415495, 0.012949, 0.00630724, 0.000203869, -0.022224, 0.0381659, 0.0319637, 0.0529982, -0.0382313, 0.0210171, 0.00551792, -0.0133803, -0.00198466, 0.0290054, 0.00593201, -0.0430279, -0.0264403, 0.0618399, 0.0193084, 0.0551696, 0.0683105, 0.0153556, 0.0209837, 0.00544423, -0.0288089, -0.000876016, 0.00853339, -0.0136135, -0.00107243, 0.0357279, 0.0343952, 0.0267335, -0.00330008, -0.027074]</code></pre><p>Stage 2: prune down to a minimal subset that keeps the confidence gap above <code>threshold</code> – i.e. the model stays at least <code>rel_tol</code> as confident in the same prediction using only what survives pruning.</p><pre><code class="language-julia hljs">f = () -&gt; confgap(softmax(vec(model(ds_nometa[mk]))), class) - threshold
+strategy = PruningStrategy(HeuristicOrder(scores), true, true, true)  # level-by-level: faster in practice (pruning.md §2.2)
+prune!(mk, ds_nometa, model, f, strategy)
+
+@info &quot;Pruning result&quot; remaining_confidence_gap = f() + threshold original_confidence_gap = cg</code></pre><pre><code class="nohighlight hljs">┌ Info: Pruning result
+│   remaining_confidence_gap = 0.8838201761245728
+└   original_confidence_gap = 0.88930297f0
+</code></pre><p>Stage 3: read the pruned mask back out in human-readable form. <code>mk</code> was built and searched entirely against <code>ds_nometa</code> (no metadata anywhere), but – per the note above – it applies just as well to the original, metadata-carrying <code>ds</code>, which is what makes <code>.metadata</code> available here to print real atom/bond values instead of raw one-hot/matrix data.</p><pre><code class="language-julia hljs">pruned = ds[mk]
+
+println(&quot;\nWhat the model needed to keep its prediction:&quot;)
+println(&quot;  lumo = &quot;, only(pruned[:lumo].metadata))
+println(&quot;  logp = &quot;, only(pruned[:logp].metadata))
+println(&quot;  ind1 = &quot;, only(pruned[:ind1].metadata))
+println(&quot;  inda = &quot;, only(pruned[:inda].metadata))
+
+atom_elements = pruned[:atoms].data[:element].metadata
+atom_charges = pruned[:atoms].data[:charge].metadata
+kept_atoms = findall(!ismissing, atom_elements)
+if isempty(kept_atoms)
+    println(&quot;  atoms: none -- the scalar descriptors above were sufficient on their own&quot;)
+else
+    println(&quot;  atoms kept ($(length(kept_atoms)) of $(length(atom_elements))):&quot;)
+    for i in kept_atoms
+        println(&quot;    atom $i: element=$(atom_elements[i])  charge=$(atom_charges[i])&quot;)
+    end
+end</code></pre><pre><code class="nohighlight hljs">
+What the model needed to keep its prediction:
+  lumo = -2.055
+  logp = 4.44
+  ind1 = 1
+  inda = 0
+  atoms kept (9 of 9):
+    atom 1: element=h  charge=0.142
+    atom 2: element=h  charge=0.142
+    atom 3: element=n  charge=0.812
+    atom 4: element=n  charge=0.812
+    atom 5: element=h  charge=0.142
+    atom 6: element=c  charge=-0.088
+    atom 7: element=h  charge=0.142
+    atom 8: element=h  charge=0.142
+    atom 9: element=h  charge=0.142
+</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../../howto/explain_prediction/">Explain a single prediction »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Monday 3 August 2026 11:50">Monday 3 August 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
