@@ -1,3 +1,7 @@
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/aicenter/ExplainMillX.jl/blob/master/LICENSE.md)
+[![Docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://aicenter.github.io/ExplainMillX.jl/dev)
+
+
 # ExplainMillX.jl
 
 **Why did your model make that prediction?** ExplainMillX.jl answers that question for
