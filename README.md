@@ -50,6 +50,36 @@ result = explain(ds, model)
 explain_json(result, extractor)
 ```
 
+An example of explanation of a sample from Mutagenesis dataset (used in tutorial of this package) 
+can look like
+
+```json
+{
+    "atoms": [
+        {
+            "charge": 0.812
+        },
+        {
+            "charge": 0.812
+        },
+        {
+            "charge": -0.388,
+            "element": "o"
+        },
+        {
+            "atom_type": 27,
+            "charge": 0.012,
+            "element": "c"
+        }
+    ],
+    "ind1": 1,
+    "inda": 0,
+    "logp": 4.44
+}
+```
+The explanation show the subset of the sample triggering the correct classification. 
+
+
 ## What's included
 
 - **`explain`/`explainf`** — the top-level pipeline: score every part of the sample for
