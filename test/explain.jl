@@ -26,12 +26,13 @@
     @testset "ExplanationResult derived statistics" begin
         an = ArrayNode(randn(Float32, 4, 1))
         mk = create_structmask(an, d -> fill(true, d))
-        r = ExplanationResult(mk, 1, 0.5, 0.4, 0.3, 10, 3)
+        r = ExplanationResult(mk, an, 1, 0.5, 0.4, 0.3, 10, 3)
         @test n_pruned(r) == 7
         @test fraction_kept(r) ≈ 0.3
         @test fraction_pruned(r) ≈ 0.7
+        @test r.sample === an
 
-        r0 = ExplanationResult(mk, 1, 0.5, 0.4, 0.3, 0, 0)
+        r0 = ExplanationResult(mk, an, 1, 0.5, 0.4, 0.3, 0, 0)
         @test fraction_kept(r0) == 1.0
         @test fraction_pruned(r0) == 0.0
 
@@ -57,6 +58,10 @@
         @test result.remaining_confidence_gap >= result.threshold - 1e-6
         @test 0 < result.n_kept <= result.n_total
         @test fraction_kept(result) == result.n_kept / result.n_total
+
+        # the result carries exactly the original sample, not some internal
+        # metadata-stripped working copy
+        @test result.sample === ds
 
         # the returned mask genuinely applies to ds
         pruned = ds[result.mask]
@@ -143,6 +148,45 @@
         @test result isa NamedTuple
         @test fₚ(model(ds[result.mask])) >= 0
         @test 0 < result.n_kept <= result.n_total
+    end
+
+    @testset "explainf: metadata is stripped internally but the mask stays valid on the original" begin
+        # a sample extracted with store_input=Val(true) carries metadata on
+        # every leaf; explainf must still work correctly (Mill.dropmeta is
+        # a pure performance optimization, see its docstring), and the
+        # returned mask, applied back to the *original* metadata-carrying
+        # sample, must produce the same pruning decisions it would on a
+        # metadata-free copy.
+        samples = [Dict("v" => Float64(i), "tag" => isodd(i) ? "a" : "b") for i in 1:20]
+        sch = schema(samples)
+        e = suggestextractor(sch; all_stable=true)
+        ds = e(samples[1]; store_input=Val(true))
+        @test ds[:v].metadata !== nothing   # sanity: metadata really is present
+
+        model = reflectinmodel(sch, e; all_imputing=true)
+        z0 = model(ds)[1]
+        sgn = sign(z0)
+        threshold = 0.5 * abs(z0)
+        fₛ = o -> sgn * o[1]
+        fₚ = o -> sgn * o[1] - threshold
+
+        Random.seed!(8)
+        result = explainf(ShapleyExplainer(60), ds, model, fₛ, fₚ)
+
+        # the mask is valid against the original, metadata-carrying ds ...
+        pruned = ds[result.mask]
+        @test fₚ(model(pruned)) >= 0
+        @test pruned[:v].metadata !== nothing   # metadata survived, untouched
+
+        # ... and gives identical keep/drop decisions to what the same mask
+        # produces against a metadata-free copy (dropmeta changes nothing
+        # about the decision, only how fast it was to reach) -- compared
+        # via model output rather than raw-node `==`, since Mill's `==` on
+        # a fully-pruned (all-`missing`) `MaybeHotMatrix` hits an unrelated
+        # 3-valued-logic quirk in Mill.jl itself when comparing two such
+        # matrices structurally.
+        ds_nometa = Mill.dropmeta(ds)
+        @test model(ds[result.mask]) ≈ model(ds_nometa[result.mask])
     end
 
     @testset "explainf: order/granularity/post-pass keywords are honored" begin

@@ -126,52 +126,71 @@ JSON.print(explain_json(ds, result.mask, e), 4)
 ## ---------------------------------------------------------------------
 
 # Below, we show the explanation step by step, explaining the concrete
-# machinery `explain(...)` above just did on our behalf. The part below is
-# intended for users who want to understand how the method actually works
-# (or who need `explainf`'s lower-level flexibility for something
-# `explain` doesn't cover -- see src/explain.jl's docstrings).
+# machinery `explain(...)` above just did on our behalf -- as literally as
+# possible, so this section stays a faithful mirror of src/explain.jl
+# rather than a simplified approximation of it. Intended for users who
+# want to understand how the method actually works (or who need
+# `explainf`'s lower-level flexibility for something `explain` doesn't
+# cover, e.g. a binary sigmoid head -- see src/explain.jl's docstrings).
 
-ŷ = argmax(vec(model(ds)))
-z0 = softmax(model(ds))[ŷ]                 # the model's raw logit on the full molecule
-@info "Explaining sample $sample_idx" logit = z0 predicted = ŷ true_label = argmax(y_test[:,sample_idx])
+# `model`'s head is a genuine 2-class softmax (Dense(10, 2) above), so
+# "confidence" is the *gap* between the predicted class's probability and
+# the runner-up's -- not the raw probability -- exactly what `explain`
+# computes internally. Defined locally, matching ExplainMillX._confgap's
+# formula exactly, so the mechanism is visible here rather than hidden
+# behind an internal function call.
+confgap(p, c) = p[c] - maximum(p[1:end.!=c])
 
-# `model`'s head is a single sigmoid unit (binary classification), not the
-# multi-class softmax the rest of ExplainMillX's tests use -- so the
-# objective is adapted accordingly: preserve the *sign* of the logit (same
-# predicted class) while requiring its magnitude stay above a fraction of
-# the original (an analogue of the softmax "confidence gap" for a binary
-# head). A real, honest finding from building this example: this
-# quickly-trained model relies overwhelmingly on the four scalar molecular
-# descriptors (lumo/logp/ind1/inda) for most predictions, so a looser
-# `rel_tol` (e.g. 0.9) typically prunes the entire atoms/bonds structure
-# away entirely -- that's a genuine property of this model, not a
-# limitation of the explainer. `rel_tol` is set tight (0.99) here so any
-# residual atom-level signal has a chance to show up; because scoring is
-# Monte Carlo (`ShapleyExplainer`), whether any specific atom's importance
-# clears that bar can vary slightly run to run -- the printed result below
-# is whatever this run's explanation genuinely found, handled gracefully
+class = argmax(vec(model(ds)))
+p0 = softmax(vec(model(ds)))
+cg = confgap(p0, class)
+@info "Explaining sample $sample_idx" confidence_gap = cg predicted = class true_label = argmax(y_test[:, sample_idx])
+
+# A real, honest finding from building this example: this quickly-trained
+# model relies overwhelmingly on the four scalar molecular descriptors
+# (lumo/logp/ind1/inda) for most predictions, so a looser `rel_tol` (e.g.
+# 0.9) typically prunes the entire atoms/bonds structure away entirely --
+# that's a genuine property of this model, not a limitation of the
+# explainer. `rel_tol` is set tight (0.99) here so any residual atom-level
+# signal has a chance to show up; because scoring is Monte Carlo
+# (`ShapleyExplainer`), whether any specific atom's importance clears that
+# bar can vary slightly run to run -- the printed result below is
+# whatever this run's explanation genuinely found, handled gracefully
 # either way.
 rel_tol = 0.99
-threshold = rel_tol * z0
-objective = o -> softmax(o)[ŷ]
+threshold = rel_tol * cg
+objective = o -> softmax(vec(o))[class]
+
+# `explainf` strips `.metadata` before scoring/pruning (`Mill.dropmeta`):
+# `stats`/`prune!` re-evaluate `model(ds[mask])` hundreds of times, the
+# model never reads `.metadata` (it isn't part of `.data`), and applying a
+# mask to a sample carrying metadata is measurably slower (roughly 2x per
+# `applymask` call on a molecule this size) for zero benefit during the
+# hot loop. The resulting mask is purely shape-derived, so it applies
+# identically to the original, metadata-carrying `ds` afterward -- which
+# is exactly what lets Stage 3 below read real atom/bond values back out.
+ds_nometa = Mill.dropmeta(ds)
 
 # Stage 1: score every maskable item's importance via Monte Carlo Shapley
 # values (masks.md §8). `stats` builds the mask internally; it comes back
 # scored and ready for pruning.
-mk, acctree = stats(ShapleyExplainer(150), ds, model, objective; rng=MersenneTwister(11))
+mk, acctree = stats(ShapleyExplainer(150), ds_nometa, model, objective; rng=MersenneTwister(11))
 scores = nodescores(mk, acctree, score)   # identity-keyed lookup, flatview.md §3
 
-# Stage 2: prune down to a minimal subset that keeps the (signed, scaled)
-# logit above `threshold` -- i.e. the model stays at least `rel_tol` as
+# Stage 2: prune down to a minimal subset that keeps the confidence gap
+# above `threshold` -- i.e. the model stays at least `rel_tol` as
 # confident in the same prediction using only what survives pruning.
-f = () -> softmax(model(ds[mk]))[ŷ] - threshold
+f = () -> confgap(softmax(vec(model(ds_nometa[mk]))), class) - threshold
 strategy = PruningStrategy(HeuristicOrder(scores), true, true, true)  # level-by-level: faster in practice (pruning.md §2.2)
-prune!(mk, ds, model, f, strategy)
+prune!(mk, ds_nometa, model, f, strategy)
 
-@info "Pruning result" remaining_confidence = f() + threshold original_confidence = z0
+@info "Pruning result" remaining_confidence_gap = f() + threshold original_confidence_gap = cg
 
-# Stage 3: read the pruned mask back out in human-readable form via the
-# metadata `applymask` carried through.
+# Stage 3: read the pruned mask back out in human-readable form. `mk` was
+# built and searched entirely against `ds_nometa` (no metadata anywhere),
+# but -- per the note above -- it applies just as well to the original,
+# metadata-carrying `ds`, which is what makes `.metadata` available here
+# to print real atom/bond values instead of raw one-hot/matrix data.
 pruned = ds[mk]
 
 println("\nWhat the model needed to keep its prediction:")
@@ -191,3 +210,4 @@ else
         println("    atom $i: element=$(atom_elements[i])  charge=$(atom_charges[i])")
     end
 end
+

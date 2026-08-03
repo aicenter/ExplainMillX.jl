@@ -38,20 +38,28 @@ end
 """
     ExplanationResult
 
-The result of [`explain`](@ref): the pruned mask together with a summary
-of how much of the sample was pruned away and how much prediction
-confidence was retained.
+The result of [`explain`](@ref): the pruned mask, the sample it applies
+to, and a summary of how much of the sample was pruned away and how much
+prediction confidence was retained.
 
 # Fields
-- `mask::StructMask`: the final, pruned mask. Apply it with `ds[mask]` to
-  get the pruned Mill sample, or read `prunemask.(first.(collectmasks(mask)))`
-  for the raw per-item keep/drop decisions.
+- `mask::StructMask`: the final, pruned mask. Apply it with `sample[mask]`
+  to get the pruned Mill sample, or read
+  `prunemask.(first.(collectmasks(mask)))` for the raw per-item keep/drop
+  decisions.
+- `sample::AbstractMillNode`: the (original, un-pruned) sample this
+  explanation is for -- i.e. exactly the `ds` passed to `explain`. Stored
+  alongside `mask` so an `ExplanationResult` is self-contained: `mask`
+  alone means nothing without knowing what it applies to (e.g. for
+  `explain_json`, or if `sample` was extracted with `store_input=Val(true)`
+  and you want its metadata later without having to keep `ds` around
+  separately).
 - `class::Int`: the class index this explanation was computed for.
 - `confidence_gap::Float64`: the model's confidence gap for `class` on the
   *original*, unpruned sample (softmax probability of `class` minus the
   highest probability among all other classes).
 - `remaining_confidence_gap::Float64`: the same confidence gap evaluated
-  on the *pruned* sample `ds[mask]`. Always `>= threshold`.
+  on the *pruned* sample `sample[mask]`. Always `>= threshold`.
 - `threshold::Float64`: the minimum confidence gap pruning was required to
   preserve, derived from `abs_tol`/`rel_tol` (see [`explain`](@ref)).
 - `n_total::Int`: total number of maskable items in the sample (features,
@@ -61,8 +69,9 @@ confidence was retained.
 Use [`fraction_kept`](@ref)/[`fraction_pruned`](@ref)/[`n_pruned`](@ref)
 for derived statistics.
 """
-struct ExplanationResult{M<:StructMask}
+struct ExplanationResult{M<:StructMask,D<:AbstractMillNode}
     mask::M
+    sample::D
     class::Int
     confidence_gap::Float64
     remaining_confidence_gap::Float64
@@ -120,6 +129,16 @@ sigmoid head, a regression target, or a custom notion of "confidence"
 for a zero-argument `f() = fₚ(model(ds[mask]))` to close over, which is
 what `prune!` actually requires.
 
+`ds` is stripped of metadata internally (`Mill.dropmeta`) before scoring
+and pruning: `stats`/`prune!` re-evaluate `model(ds[mask])` hundreds of
+times, the model never reads `.metadata` (it isn't part of `.data`), and
+applying a mask to a sample with metadata is measurably slower (`applymask`
+on a `BagNode`/`ProductNode` re-slices `.metadata` on every call via
+Mill's own `getindex`, roughly 2x more work per call, confirmed by
+benchmark) for zero benefit during the hot loop. The returned `mask` is
+purely shape-derived and applies identically to a metadata-carrying `ds`
+afterward -- `explain` does exactly that for its final result.
+
 # Keyword arguments
 - `order::Union{HeuristicOrder,GreedyForward,Nothing} = nothing`: the
   pruning search order (`doc/design/pruning.md` §4). `nothing` (the
@@ -147,6 +166,8 @@ function explainf(scorer::AbstractHeuristic, ds::AbstractMillNode, model, fₛ, 
     random_removal::Bool=true,
     finetune::Bool=true,
     rng::AbstractRNG=Random.default_rng())
+    ds = Mill.dropmeta(ds)   # see docstring: pure performance optimization,
+    # the resulting mask is valid against a metadata-carrying `ds` too
     mask, acctree = stats(scorer, ds, model, fₛ; rng)
 
     pruning_order = order
@@ -282,6 +303,6 @@ function _explain(ds::AbstractMillNode, model, class::Integer, scorer::AbstractH
 
     remaining_cg = _confgap(_softmax(vec(model(ds[result.mask]))), class)
 
-    ExplanationResult(result.mask, class, Float64(cg), Float64(remaining_cg),
+    ExplanationResult(result.mask, ds, class, Float64(cg), Float64(remaining_cg),
         Float64(threshold), result.n_total, result.n_kept)
 end

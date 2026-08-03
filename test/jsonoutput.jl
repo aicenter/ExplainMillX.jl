@@ -170,7 +170,15 @@ end
 
         Random.seed!(7)
         result = explain(ds, model; scorer=ShapleyExplainer(60), rel_tol=0.9)
-        out = explain_json(ds, result.mask, e)
+
+        # explain() must not leak its internal metadata-stripped working
+        # copy (Mill.dropmeta, used for performance inside explainf) into
+        # the result -- result.sample is exactly the original, metadata-
+        # carrying `ds`, and explain_json(result, e) must agree with the
+        # spelled-out form.
+        @test result.sample === ds
+        out = explain_json(result, e)
+        @test out == explain_json(ds, result.mask, e)
 
         # Fixed number of assertions regardless of what pruning happened to
         # decide (the model is randomly initialized and pruning is

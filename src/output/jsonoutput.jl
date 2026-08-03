@@ -153,10 +153,21 @@ union-typed/positional extraction) are not supported.
 ```julia
 ds = e(json_sample; store_input=Val(true))
 result = explain(ds, model)   # default scorer, ShapleyExplainer(300)
-explain_json(ds, result.mask, e)   # => a JSON-shaped Dict, pruned parts as `nothing`/absent
+explain_json(result, e)   # => a JSON-shaped Dict, pruned parts as `nothing`/absent
+explain_json(ds, result.mask, e)   # equivalent, spelled out
 ```
 """
 function explain_json(ds::AbstractMillNode, mask::StructMask, extractor)
     raw = only(_explain_json(ds, mask, extractor))
     _prunejson(raw)
 end
+
+"""
+    explain_json(result::ExplanationResult, extractor) -> Any
+
+Convenience form of [`explain_json`](@ref) for the common case: `result`
+already carries the sample it was computed for (`result.sample`), so this
+is exactly `explain_json(result.sample, result.mask, extractor)`.
+"""
+explain_json(result::ExplanationResult, extractor) =
+    explain_json(result.sample, result.mask, extractor)
